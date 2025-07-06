@@ -20,6 +20,10 @@ export type SaleItem = {
   quantity: number
   price: number
   costPrice: number
+  recordedBy?: {
+    email: string | null;
+    uid: string;
+  };
 }
 
 export type Sale = {
@@ -58,4 +62,20 @@ export type Expense = {
     email: string | null;
     uid: string;
   };
+};
+
+export type ScheduledDiscountProduct = {
+  productId: string;
+  productName: string;
+  originalPrice: number;
+  discountPrice: number;
+};
+
+export type ScheduledDiscount = {
+  id?: string;
+  name: string;
+  startDate: string; // ISO string
+  endDate:string; // ISO string
+  isActive: boolean;
+  products: ScheduledDiscountProduct[];
 };

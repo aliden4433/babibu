@@ -114,35 +114,3 @@ export async function updateProductsBatch(ids: string[], data: Partial<Omit<Prod
     return { success: false, message: "Gagal memperbarui produk." };
   }
 }
-
-export async function applyDiscountToProducts(productIds: string[], discountPercentage: number) {
-  if (discountPercentage < 0 || discountPercentage > 100) {
-    return { success: false, message: "Persentase diskon tidak valid." };
-  }
-
-  try {
-    const batch = writeBatch(db);
-    const productsCol = collection(db, "products");
-    const discountMultiplier = 1 - (discountPercentage / 100);
-
-    for (const id of productIds) {
-      const productRef = doc(productsCol, id);
-      const productSnap = await getDoc(productRef);
-      
-      if (productSnap.exists()) {
-        const productData = productSnap.data() as Product;
-        const newPrice = productData.price * discountMultiplier;
-        const roundedPrice = Math.round(newPrice);
-        batch.update(productRef, { price: roundedPrice });
-      }
-    }
-
-    await batch.commit();
-    revalidatePath("/dashboard/products");
-    revalidatePath("/dashboard/discounts");
-    return { success: true, message: `Diskon ${discountPercentage}% berhasil diterapkan pada ${productIds.length} produk.` };
-  } catch (error) {
-    console.error("Error applying discount: ", error);
-    return { success: false, message: "Gagal menerapkan diskon." };
-  }
-}
