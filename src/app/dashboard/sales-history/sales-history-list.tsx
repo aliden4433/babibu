@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react";
-import type { Sale, Expense } from "@/lib/types";
+import type { Sale, Expense, Product } from "@/lib/types";
 import { format, addDays, subDays } from "date-fns";
 import { id } from "date-fns/locale";
 import type { DateRange } from "react-day-picker";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ReceiptText, Trash2, Loader2, Calendar as CalendarIcon, ChevronDown } from "lucide-react";
+import { ReceiptText, Trash2, Loader2, Calendar as CalendarIcon, ChevronDown, Pencil } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -34,16 +34,19 @@ import { deleteSales, deleteSale } from "./actions";
 import { ExportSalesButton } from "./export-sales-button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { SaleEditDialog } from "./sale-edit-dialog";
 
 interface SalesHistoryListProps {
   sales: Sale[];
   expenses: Expense[];
+  products: Product[];
 }
 
-export function SalesHistoryList({ sales: initialSales, expenses: initialExpenses }: SalesHistoryListProps) {
+export function SalesHistoryList({ sales: initialSales, expenses: initialExpenses, products }: SalesHistoryListProps) {
   const [sales, setSales] = useState(initialSales);
   const [selectedSales, setSelectedSales] = useState<string[]>([]);
   const [salesForDeletion, setSalesForDeletion] = useState<Sale[]>([]);
+  const [saleToEdit, setSaleToEdit] = useState<Sale | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -104,6 +107,11 @@ export function SalesHistoryList({ sales: initialSales, expenses: initialExpense
   const handleDeleteRequest = (salesToDelete: Sale[]) => {
     if (userRole !== 'admin' || salesToDelete.length === 0) return;
     setSalesForDeletion(salesToDelete);
+  };
+  
+  const handleEditRequest = (sale: Sale) => {
+    if (userRole !== 'admin') return;
+    setSaleToEdit(sale);
   };
 
   const handleConfirmDelete = async () => {
@@ -295,28 +303,15 @@ export function SalesHistoryList({ sales: initialSales, expenses: initialExpense
                           </AccordionPrimitive.Trigger>
                       </AccordionPrimitive.Header>
                       {userRole === 'admin' && (
-                        <div className="pr-4">
-                            <div
-                                role="button"
-                                tabIndex={0}
-                                className={cn(
-                                    buttonVariants({ variant: "ghost", size: "icon" }),
-                                    "h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                                )}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteRequest([sale]);
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.stopPropagation();
-                                        handleDeleteRequest([sale]);
-                                    }
-                                }}
-                                aria-label="Hapus Transaksi"
-                            >
+                        <div className="pr-4 flex items-center">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); handleEditRequest(sale); }}>
+                                <Pencil className="h-4 w-4" />
+                                <span className="sr-only">Edit Transaksi</span>
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => { e.stopPropagation(); handleDeleteRequest([sale]); }}>
                                 <Trash2 className="h-4 w-4" />
-                            </div>
+                                <span className="sr-only">Hapus Transaksi</span>
+                            </Button>
                         </div>
                       )}
                     </div>
@@ -387,6 +382,13 @@ export function SalesHistoryList({ sales: initialSales, expenses: initialExpense
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <SaleEditDialog
+        open={!!saleToEdit}
+        onOpenChange={(open) => !open && setSaleToEdit(null)}
+        sale={saleToEdit}
+        products={products}
+      />
     </>
   );
 }
