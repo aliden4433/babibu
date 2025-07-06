@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
@@ -29,10 +28,12 @@ export function ReportsClientPage({ initialSales, products, initialExpenses }: R
   const [date, setDate] = useState<DateRange | undefined>(undefined)
 
   useEffect(() => {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     setDate({
-      from: addDays(new Date(), -6), // Default to last 7 days
-      to: new Date(),
-    })
+      from: firstDayOfMonth,
+      to: today,
+    });
   }, [])
 
   const filteredSales = useMemo(() => {
