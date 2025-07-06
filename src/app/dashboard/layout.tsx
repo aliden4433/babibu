@@ -1,8 +1,9 @@
+
 "use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, History, LogOut, Package, ShoppingCart, UserCircle, PanelLeft, Settings, Wallet, PanelLeftClose, PanelLeftOpen } from "lucide-react"
+import { BarChart2, History, LogOut, Package, ShoppingCart, UserCircle, PanelLeft, Settings, Wallet, PanelLeftClose, PanelLeftOpen, Tag } from "lucide-react"
 
 import {
   Sidebar,
@@ -25,6 +26,7 @@ import { Button } from "@/components/ui/button"
 const allNavItems = [
   { href: "/dashboard", icon: ShoppingCart, label: "Penjualan" },
   { href: "/dashboard/products", icon: Package, label: "Produk" },
+  { href: "/dashboard/discounts", icon: Tag, label: "Diskon Produk", roles: ["admin"] },
   { href: "/dashboard/sales-history", icon: History, label: "Riwayat Penjualan" },
   { href: "/dashboard/expenses", icon: Wallet, label: "Pengeluaran", roles: ["admin", "cashier"] },
   { href: "/dashboard/reports", icon: BarChart2, label: "Laporan", roles: ["admin"] },
@@ -42,7 +44,7 @@ function DashboardLayoutContent({
 
   const navItems = allNavItems.filter(item => {
     if (!item.roles) return true; // Accessible to all roles if not specified
-    if (!user) return false; // Hide role-specific items if user is not loaded
+    if (!user || !user.role) return false; // Hide role-specific items if user/role is not loaded
     return item.roles.includes(user.role);
   });
 
@@ -108,7 +110,7 @@ function DashboardLayoutContent({
               <span className="sr-only">Tampilkan Sidebar</span>
             </Button>
           )}
-          <h1 className="text-xl font-semibold">{currentPage?.label}</h1>
+          <h1 className="text-xl font-semibold">{currentPage?.label || ''}</h1>
         </header>
         <main className="p-4 sm:px-6 sm:py-0">{children}</main>
       </SidebarInset>

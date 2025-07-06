@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -34,6 +35,7 @@ import { ProductFormDialog } from "./product-form-dialog"
 import { ExpenseRowActions } from "@/app/dashboard/expenses/expense-row-actions"
 import { ExpenseFormDialog } from "@/app/dashboard/expenses/expense-form-dialog"
 import { ExpensesDataTableToolbar } from "@/app/dashboard/expenses/expenses-data-table-toolbar";
+import { DiscountsDataTableToolbar } from "@/app/dashboard/discounts/discounts-data-table-toolbar";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -184,10 +186,11 @@ const ExpenseMobileCard = ({ row, userRole, categories = [] }: { row: any, userR
     )
 }
 
-const MobileCard = ({ row, userRole, categories }: { row: any, userRole?: AppUser['role'], categories?: ExpenseCategoryDoc[] }) => {
+const MobileCard = ({ row, userRole, categories, entityName }: { row: any, userRole?: AppUser['role'], categories?: ExpenseCategoryDoc[], entityName?: string }) => {
     const data = row.original;
     const isExpense = 'amount' in data && 'category' in data;
 
+    // For discount page, we still use ProductMobileCard but might adjust its behavior if needed
     if (isExpense) {
         return <ExpenseMobileCard row={row} userRole={userRole} categories={categories} />;
     }
@@ -225,28 +228,25 @@ export function DataTable<TData, TValue>({
     },
   })
 
+  const renderToolbar = () => {
+    switch (entityName) {
+      case "pengeluaran":
+        return <ExpensesDataTableToolbar table={table} userRole={userRole} filterColumnId={filterColumnId} filterPlaceholder={filterPlaceholder} />;
+      case "diskon":
+        return <DiscountsDataTableToolbar table={table} userRole={userRole} filterColumnId={filterColumnId} filterPlaceholder={filterPlaceholder} />;
+      default:
+        return <DataTableToolbar table={table} userRole={userRole} filterColumnId={filterColumnId} filterPlaceholder={filterPlaceholder} />;
+    }
+  }
+
   // Mobile card view. `isMobile` is false on first render, so this avoids hydration errors.
   if (isMobile) {
     return (
       <div className="space-y-4">
-        {entityName === "pengeluaran" ? (
-          <ExpensesDataTableToolbar
-            table={table}
-            userRole={userRole}
-            filterColumnId={filterColumnId}
-            filterPlaceholder={filterPlaceholder}
-          />
-        ) : (
-          <DataTableToolbar 
-            table={table} 
-            userRole={userRole}
-            filterColumnId={filterColumnId}
-            filterPlaceholder={filterPlaceholder}
-          />
-        )}
+        {renderToolbar()}
         <div className="space-y-4 pb-4">
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => <MobileCard key={row.id} row={row} userRole={userRole} categories={categories} />)
+              table.getRowModel().rows.map((row) => <MobileCard key={row.id} row={row} userRole={userRole} categories={categories} entityName={entityName} />)
             ) : (
               <Card>
                 <CardContent className="h-24 flex items-center justify-center text-muted-foreground">
@@ -262,21 +262,7 @@ export function DataTable<TData, TValue>({
   // Desktop table view
   return (
     <div className="space-y-4">
-      {entityName === "pengeluaran" ? (
-          <ExpensesDataTableToolbar
-            table={table}
-            userRole={userRole}
-            filterColumnId={filterColumnId}
-            filterPlaceholder={filterPlaceholder}
-          />
-        ) : (
-          <DataTableToolbar 
-            table={table} 
-            userRole={userRole}
-            filterColumnId={filterColumnId}
-            filterPlaceholder={filterPlaceholder}
-          />
-        )}
+      {renderToolbar()}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
