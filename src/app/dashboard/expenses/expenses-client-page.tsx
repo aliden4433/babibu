@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExpensesByCategoryChart } from "./expense-charts";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ExpensesClientPageProps {
   initialExpenses: Expense[];
@@ -20,7 +21,9 @@ interface ExpensesClientPageProps {
 }
 
 export function ExpensesClientPage({ initialExpenses, initialCategories }: ExpensesClientPageProps) {
-  const columns = React.useMemo(() => getColumns(initialCategories), [initialCategories]);
+  const { user } = useAuth();
+  const userRole = user?.role;
+  const columns = React.useMemo(() => getColumns(initialCategories, userRole), [initialCategories, userRole]);
   const isMobile = useIsMobile();
   const [currentDate, setCurrentDate] = useState<Date | undefined>(undefined);
 
@@ -138,7 +141,7 @@ export function ExpensesClientPage({ initialExpenses, initialCategories }: Expen
       <DataTable
         columns={columns}
         data={filteredExpenses}
-        userRole="admin"
+        userRole={userRole}
         filterColumnId="description"
         filterPlaceholder="Filter berdasarkan deskripsi..."
         categories={initialCategories}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { createContext, useState, useEffect, ReactNode } from 'react';
@@ -33,8 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
-          // Force every user to have the admin role for UI purposes
-          setUser({ uid: firebaseUser.uid, ...userDoc.data(), role: 'admin' } as AppUser);
+          setUser({ uid: firebaseUser.uid, ...userDoc.data() } as AppUser);
         } else {
           // If user exists in Auth but not in Firestore, create them as admin (for legacy users)
           const newUserProfile: AppUser = {
