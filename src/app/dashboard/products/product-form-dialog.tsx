@@ -34,7 +34,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Nama produk tidak boleh kosong."),
   price: z.coerce.number().min(0, "Harga harus angka positif."),
   costPrice: z.coerce.number().min(0, "Harga modal harus angka positif."),
-  stock: z.coerce.number().int().min(0, "Stok harus bilangan bulat positif."),
+  stock: z.coerce.number().int("Stok harus berupa bilangan bulat."),
 })
 
 interface ProductFormDialogProps {

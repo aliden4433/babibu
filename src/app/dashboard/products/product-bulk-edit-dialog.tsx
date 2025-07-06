@@ -33,7 +33,7 @@ import type { Product } from "@/lib/types"
 const formSchema = z.object({
   price: z.coerce.number().min(0, "Harga harus angka positif.").optional().or(z.literal('')),
   costPrice: z.coerce.number().min(0, "Harga modal harus angka positif.").optional().or(z.literal('')),
-  stock: z.coerce.number().int().min(0, "Stok harus bilangan bulat positif.").optional().or(z.literal('')),
+  stock: z.coerce.number().int("Stok harus berupa bilangan bulat.").optional().or(z.literal('')),
 })
 
 interface ProductBulkEditDialogProps {
