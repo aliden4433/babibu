@@ -12,6 +12,7 @@ import { ExpenseFormDialog } from "./expense-form-dialog";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExpensesByCategoryChart } from "./expense-charts";
 
 interface ExpensesClientPageProps {
   initialExpenses: Expense[];
@@ -47,9 +48,9 @@ export function ExpensesClientPage({ initialExpenses, initialCategories }: Expen
     });
   };
 
-  const { monthlyTotal, displayedMonthName, filteredExpenses } = useMemo(() => {
+  const { monthlyTotal, displayedMonthName, filteredExpenses, expensesByCategory } = useMemo(() => {
     if (!currentDate) {
-        return { monthlyTotal: 0, displayedMonthName: 'Memuat...', filteredExpenses: [] };
+        return { monthlyTotal: 0, displayedMonthName: 'Memuat...', filteredExpenses: [], expensesByCategory: [] };
     }
 
     const selectedMonth = currentDate.getMonth();
@@ -63,8 +64,17 @@ export function ExpensesClientPage({ initialExpenses, initialCategories }: Expen
       });
 
     const total = filtered.reduce((acc, expense) => acc + expense.amount, 0);
+    
+    const categoryTotals: { [key: string]: number } = {};
+    filtered.forEach(expense => {
+        categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+    });
 
-    return { monthlyTotal: total, displayedMonthName, filteredExpenses: filtered };
+    const chartData = Object.entries(categoryTotals)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total);
+
+    return { monthlyTotal: total, displayedMonthName, filteredExpenses: filtered, expensesByCategory: chartData };
   }, [initialExpenses, currentDate]);
 
   const isNextMonthDisabled = useMemo(() => {
@@ -82,8 +92,8 @@ export function ExpensesClientPage({ initialExpenses, initialCategories }: Expen
 
   return (
     <div className="space-y-4">
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Pengeluaran</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -103,6 +113,14 @@ export function ExpensesClientPage({ initialExpenses, initialCategories }: Expen
                     <span className="sr-only">Bulan berikutnya</span>
                 </Button>
             </div>
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
+           <CardHeader>
+            <CardTitle className="text-sm font-medium">Pengeluaran per Kategori</CardTitle>
+          </CardHeader>
+          <CardContent>
+             <ExpensesByCategoryChart data={expensesByCategory} />
           </CardContent>
         </Card>
       </div>
