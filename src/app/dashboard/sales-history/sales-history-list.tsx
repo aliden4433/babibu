@@ -34,7 +34,6 @@ import { deleteSales, deleteSale } from "./actions";
 import { ExportSalesButton } from "./export-sales-button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
-import { useDangerZone } from "@/context/danger-zone-context";
 
 interface SalesHistoryListProps {
   sales: Sale[];
@@ -48,7 +47,6 @@ export function SalesHistoryList({ sales: initialSales, expenses: initialExpense
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { isDangerZoneActive } = useDangerZone();
   const userRole = user?.role;
   const [date, setDate] = useState<DateRange | undefined>(undefined);
 
@@ -105,14 +103,6 @@ export function SalesHistoryList({ sales: initialSales, expenses: initialExpense
 
   const handleDeleteRequest = (salesToDelete: Sale[]) => {
     if (userRole !== 'admin' || salesToDelete.length === 0) return;
-    if (!isDangerZoneActive) {
-      toast({
-        variant: "destructive",
-        title: "Mode Aman Aktif",
-        description: "Untuk menghapus data, aktifkan 'Zona Bahaya' di halaman Pengaturan.",
-      });
-      return;
-    }
     setSalesForDeletion(salesToDelete);
   };
 
@@ -311,8 +301,7 @@ export function SalesHistoryList({ sales: initialSales, expenses: initialExpense
                                 tabIndex={0}
                                 className={cn(
                                     buttonVariants({ variant: "ghost", size: "icon" }),
-                                    "h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
-                                    isDangerZoneActive ? "opacity-0 group-hover:opacity-100 transition-opacity" : "opacity-50 cursor-not-allowed"
+                                    "h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                                 )}
                                 onClick={(e) => {
                                   e.stopPropagation();

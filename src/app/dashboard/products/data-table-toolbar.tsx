@@ -21,7 +21,6 @@ import {
 import { deleteProducts } from "./actions"
 import type { Product, AppUser } from "@/lib/types"
 import { ProductBulkEditDialog } from "./product-bulk-edit-dialog"
-import { useDangerZone } from "@/context/danger-zone-context"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -37,7 +36,6 @@ export function DataTableToolbar<TData>({
   filterPlaceholder,
 }: DataTableToolbarProps<TData>) {
   const { toast } = useToast()
-  const { isDangerZoneActive } = useDangerZone()
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isBulkEditDialogOpen, setIsBulkEditDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -99,7 +97,6 @@ export function DataTableToolbar<TData>({
           <Button
             variant="destructive"
             onClick={() => setIsDeleteDialogOpen(true)}
-            disabled={!isDangerZoneActive}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Hapus ({selectedRows.length})

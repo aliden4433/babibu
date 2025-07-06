@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/sidebar"
 import { Icons } from "@/components/icons"
 import { useAuth } from "@/hooks/use-auth"
-import { DangerZoneProvider } from "@/context/danger-zone-context"
 import { Button } from "@/components/ui/button"
 
 const allNavItems = [
@@ -125,9 +124,7 @@ export default function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
-      <DangerZoneProvider>
-        <DashboardLayoutContent>{children}</DashboardLayoutContent>
-      </DangerZoneProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
     </SidebarProvider>
   )
 }

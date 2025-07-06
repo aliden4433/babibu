@@ -5,7 +5,7 @@ import { useTheme } from "next-themes"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Monitor, Moon, Sun, AlertTriangle } from "lucide-react"
+import { Monitor, Moon, Sun, AlertTriangle, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -32,8 +32,17 @@ import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/hooks/use-auth"
 import { Badge } from "@/components/ui/badge"
-import { useDangerZone } from "@/context/danger-zone-context"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { resetAllData } from "./actions"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const discountFormSchema = z.object({
   discount: z.coerce
@@ -49,8 +58,8 @@ export function GeneralSettings() {
   
   const [mounted, setMounted] = useState(false)
   const [defaultDiscount, setDefaultDiscount] = useState(0)
-  const { isDangerZoneActive, activateDangerZone, deactivateDangerZone } = useDangerZone()
-  const [password, setPassword] = useState("")
+  const [isResetting, setIsResetting] = useState(false)
+  const [isResetAlertOpen, setIsResetAlertOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -83,11 +92,18 @@ export function GeneralSettings() {
     })
   }
 
-  const handleActivation = () => {
-    const success = activateDangerZone(password)
-    if (success) {
-      setPassword("")
+  const handleResetData = async () => {
+    setIsResetting(true);
+    const result = await resetAllData();
+    if (result.success) {
+      toast({ title: "Sukses", description: result.message });
+      setIsResetAlertOpen(false);
+      // Optional: you might want to force a reload to reflect the empty state
+      window.location.reload();
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
+    setIsResetting(false);
   }
 
   return (
@@ -203,53 +219,39 @@ export function GeneralSettings() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-destructive">Zona Bahaya</CardTitle>
+          <CardTitle className="text-destructive">Reset Data Aplikasi</CardTitle>
           <CardDescription>
-            Aktifkan mode ini untuk mengakses fitur penghapusan data sensitif.
-            Tindakan ini tidak dapat diurungkan.
+            Tindakan ini akan menghapus semua data transaksi, produk, dan pengaturan secara permanen. Tindakan ini tidak dapat dibatalkan.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {isDangerZoneActive ? (
-            <div className="space-y-4">
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Mode Berbahaya Aktif</AlertTitle>
-                <AlertDescription>
-                  Fitur penghapusan riwayat penjualan dan pengeluaran saat ini
-                  diaktifkan. Harap berhati-hati.
-                </AlertDescription>
-              </Alert>
-              <Button
-                onClick={deactivateDangerZone}
-                variant="outline"
-              >
-                Nonaktifkan Zona Bahaya
-              </Button>
-            </div>
-          ) : (
-            <div className="max-w-sm space-y-2">
-              <Label htmlFor="danger-password">Kata Sandi Admin</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="danger-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleActivation()}
-                />
-                <Button onClick={handleActivation} variant="destructive">
-                  Aktifkan
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Masukkan kata sandi untuk mengaktifkan penghapusan data.
-              </p>
-            </div>
-          )}
+        <CardContent>
+          <Button variant="destructive" onClick={() => setIsResetAlertOpen(true)}>
+            <AlertTriangle className="mr-2 h-4 w-4" />
+            Reset Semua Data
+          </Button>
         </CardContent>
       </Card>
+       <AlertDialog open={isResetAlertOpen} onOpenChange={setIsResetAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Anda benar-benar yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ini akan menghapus semua data produk, riwayat penjualan, pengeluaran, jadwal diskon, dan kategori secara permanen. Data yang sudah dihapus tidak dapat dipulihkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isResetting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResetData}
+              disabled={isResetting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isResetting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Ya, Hapus Semua Data
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

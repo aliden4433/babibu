@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { deleteExpenses } from "./actions"
 import type { Expense, AppUser } from "@/lib/types"
-import { useDangerZone } from "@/context/danger-zone-context"
 
 interface ExpensesDataTableToolbarProps<TData> {
   table: Table<TData>
@@ -36,7 +35,6 @@ export function ExpensesDataTableToolbar<TData>({
   filterPlaceholder,
 }: ExpensesDataTableToolbarProps<TData>) {
   const { toast } = useToast()
-  const { isDangerZoneActive } = useDangerZone();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const selectedRows = table.getFilteredSelectedRowModel().rows
@@ -85,7 +83,6 @@ export function ExpensesDataTableToolbar<TData>({
           <Button
             variant="destructive"
             onClick={() => setIsDeleteDialogOpen(true)}
-            disabled={!isDangerZoneActive}
           >
             <Trash2 className="mr-2 h-4 w-4" />
             Hapus ({selectedRows.length})
