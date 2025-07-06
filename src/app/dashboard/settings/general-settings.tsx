@@ -43,6 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { logActivity } from "../logs/actions"
 
 const discountFormSchema = z.object({
   discount: z.coerce
@@ -96,6 +97,9 @@ export function GeneralSettings() {
     setIsResetting(true);
     const result = await resetAllData();
     if (result.success) {
+      if (user) {
+        await logActivity(user, 'RESET_DATA', 'mereset semua data aplikasi.');
+      }
       toast({ title: "Sukses", description: result.message });
       setIsResetAlertOpen(false);
       // Optional: you might want to force a reload to reflect the empty state

@@ -35,6 +35,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { ProductVariantDialog } from "./sales/product-variant-dialog"
 import { ExpenseFormDialog } from "@/app/dashboard/expenses/expense-form-dialog"
 import { useCart } from "@/context/cart-context"
+import { useAuth } from "@/hooks/use-auth"
+import { logActivity } from "./logs/actions"
 
 interface SalesClientPageProps {
   products: Product[]
@@ -61,6 +63,7 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
     totalItemsInCart,
     isCartLoaded,
   } = useCart();
+  const { user } = useAuth();
 
   const [discount, setDiscount] = useState(0) // Percentage
   const [transactionDate, setTransactionDate] = useState<Date>()
@@ -179,6 +182,9 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
     try {
       const result = await addSale(saleData)
       if (result.success) {
+        if (user) {
+          await logActivity(user, 'CREATE_SALE', `mencatat transaksi baru senilai ${formatCurrency(total)}.`);
+        }
         toast({
           title: "Transaksi Berhasil",
           description: result.message,

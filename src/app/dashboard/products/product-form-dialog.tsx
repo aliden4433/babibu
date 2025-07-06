@@ -29,6 +29,8 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { addProduct, updateProduct } from "./actions"
 import type { Product } from "@/lib/types"
+import { useAuth } from "@/hooks/use-auth"
+import { logActivity } from "../logs/actions"
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama produk tidak boleh kosong."),
@@ -51,6 +53,7 @@ export function ProductFormDialog({ product, children, open: openProp, onOpenCha
   
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const { user } = useAuth()
   const isEditMode = !!product
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -95,6 +98,13 @@ export function ProductFormDialog({ product, children, open: openProp, onOpenCha
       }
 
       if (result.success) {
+        if (user) {
+          const action = isEditMode ? 'UPDATE_PRODUCT' : 'CREATE_PRODUCT';
+          const details = isEditMode
+            ? `memperbarui produk "${values.name}".`
+            : `menambahkan produk baru "${values.name}".`;
+          await logActivity(user, action, details);
+        }
         toast({
           title: "Sukses",
           description: result.message,

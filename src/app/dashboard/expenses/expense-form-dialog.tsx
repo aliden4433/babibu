@@ -43,6 +43,7 @@ import type { Expense, ExpenseCategoryDoc } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/use-auth";
+import { logActivity } from "../logs/actions";
 
 const formSchema = z.object({
   description: z.string().min(1, "Deskripsi tidak boleh kosong."),
@@ -170,6 +171,13 @@ export function ExpenseFormDialog({ expense, children, categories, open: openPro
       }
 
       if (result.success) {
+        if (user) {
+          const action = isEditMode ? 'UPDATE_EXPENSE' : 'CREATE_EXPENSE';
+          const details = isEditMode
+            ? `memperbarui pengeluaran "${values.description}".`
+            : `menambahkan pengeluaran baru "${values.description}" sejumlah ${new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(values.amount)}.`;
+          await logActivity(user, action, details);
+        }
         toast({
           title: "Sukses",
           description: result.message,

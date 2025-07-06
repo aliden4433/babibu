@@ -28,6 +28,8 @@ import type { Product } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { deleteProduct, duplicateProduct } from "./actions"
 import { ProductFormDialog } from "./product-form-dialog"
+import { useAuth } from "@/hooks/use-auth"
+import { logActivity } from "../logs/actions"
 
 interface ProductRowActionsProps {
   product: Product
@@ -39,6 +41,7 @@ export function ProductRowActions({ product }: ProductRowActionsProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDuplicating, setIsDuplicating] = useState(false)
   const { toast } = useToast()
+  const { user } = useAuth()
 
   async function handleDuplicate() {
     if (!product) return;
@@ -47,6 +50,9 @@ export function ProductRowActions({ product }: ProductRowActionsProps) {
     try {
       const result = await duplicateProduct(productToDuplicate);
       if (result.success) {
+        if (user) {
+          await logActivity(user, 'DUPLICATE_PRODUCT', `menduplikasi produk "${product.name}".`);
+        }
         toast({
           title: "Sukses",
           description: "Produk duplikat telah dibuat.",
@@ -71,6 +77,9 @@ export function ProductRowActions({ product }: ProductRowActionsProps) {
     try {
       const result = await deleteProduct(product.id)
       if (result.success) {
+        if (user) {
+          await logActivity(user, 'DELETE_PRODUCT', `menghapus produk "${product.name}".`);
+        }
         toast({
           title: "Sukses",
           description: result.message,

@@ -6,9 +6,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import { Loader2, LogIn } from 'lucide-react';
 
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -16,6 +17,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/icons';
 import { useAuth } from '@/hooks/use-auth';
+import { logActivity } from '../dashboard/logs/actions';
+import type { AppUser } from '@/lib/types';
+
 
 const formSchema = z.object({
   email: z.string().email('Harap masukkan alamat email yang valid.'),
@@ -47,7 +51,17 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const firebaseUser = userCredential.user;
+
+      // Fetch user profile to log with role
+      const userRef = doc(db, "users", firebaseUser.uid);
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+          const appUser = { uid: firebaseUser.uid, ...userDoc.data() } as AppUser;
+          await logActivity(appUser, 'LOGIN', `Pengguna ${appUser.email} telah login.`);
+      }
+      
       toast({
         title: 'Login Berhasil',
         description: 'Anda akan diarahkan ke dashboard.',

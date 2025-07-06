@@ -25,6 +25,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { activateDiscount, deactivateDiscount, deleteScheduledDiscount, duplicateScheduledDiscount } from './actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { logActivity } from '../logs/actions';
 
 interface DiscountCampaignCardProps {
   discount: ScheduledDiscount;
@@ -33,6 +35,7 @@ interface DiscountCampaignCardProps {
 
 export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardProps) {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isDuplicating, setIsDuplicating] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -41,6 +44,9 @@ export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardP
         setIsLoading(true);
         const result = await activateDiscount(discount.id!);
         if (result.success) {
+            if (user) {
+              await logActivity(user, 'ACTIVATE_DISCOUNT', `mengaktifkan jadwal diskon "${discount.name}".`);
+            }
             toast({ title: 'Sukses', description: result.message });
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.message });
@@ -52,6 +58,9 @@ export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardP
         setIsLoading(true);
         const result = await deactivateDiscount(discount.id!);
         if (result.success) {
+            if (user) {
+              await logActivity(user, 'DEACTIVATE_DISCOUNT', `menonaktifkan jadwal diskon "${discount.name}".`);
+            }
             toast({ title: 'Sukses', description: result.message });
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.message });
@@ -63,6 +72,9 @@ export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardP
         setIsLoading(true);
         const result = await deleteScheduledDiscount(discount.id!);
         if (result.success) {
+            if (user) {
+              await logActivity(user, 'DELETE_DISCOUNT', `menghapus jadwal diskon "${discount.name}".`);
+            }
             toast({ title: 'Sukses', description: result.message });
             setIsDeleteDialogOpen(false);
         } else {
@@ -75,6 +87,9 @@ export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardP
         setIsDuplicating(true);
         const result = await duplicateScheduledDiscount(discount.id!);
         if (result.success) {
+            if (user) {
+              await logActivity(user, 'DUPLICATE_DISCOUNT', `menduplikasi jadwal diskon "${discount.name}".`);
+            }
             toast({ title: 'Sukses', description: result.message });
         } else {
             toast({ variant: 'destructive', title: 'Error', description: result.message });

@@ -80,3 +80,14 @@ export type ScheduledDiscount = {
   isActive: boolean;
   products: ScheduledDiscountProduct[];
 };
+
+export type ActivityLog = {
+  id: string;
+  timestamp: string; // ISO String
+  user: {
+    uid: string;
+    email: string | null;
+  };
+  action: string;
+  details: string;
+};

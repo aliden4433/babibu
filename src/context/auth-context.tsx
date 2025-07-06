@@ -8,6 +8,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
 import type { AppUser } from '@/lib/types';
+import { logActivity } from '@/app/dashboard/logs/actions';
 
 
 interface AuthContextType {
@@ -72,6 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   const signOut = async () => {
+    if (user) {
+      await logActivity(user, 'LOGOUT', `Pengguna ${user.email} telah keluar.`);
+    }
     await firebaseSignOut(auth);
     setUser(null); // Clear user state immediately
     router.push('/login');

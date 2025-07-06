@@ -22,6 +22,8 @@ import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/use-auth";
+import { logActivity } from "../logs/actions";
 
 const productSchema = z.object({
   productId: z.string(),
@@ -54,6 +56,7 @@ interface DiscountFormDialogProps {
 export function DiscountFormDialog({ products, children, open, onOpenChange, initialData }: DiscountFormDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
   const isEditMode = !!initialData;
   const isDiscountActive = isEditMode && !!initialData?.isActive;
 
@@ -145,6 +148,13 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
       }
       
       if (result.success) {
+        if (user) {
+          const action = isEditMode ? 'UPDATE_DISCOUNT' : 'CREATE_DISCOUNT';
+          const details = isEditMode
+            ? `memperbarui jadwal diskon "${values.name}".`
+            : `membuat jadwal diskon baru "${values.name}".`;
+          await logActivity(user, action, details);
+        }
         toast({ title: "Sukses", description: result.message });
         onOpenChange(false);
       } else {

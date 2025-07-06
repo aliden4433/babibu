@@ -28,6 +28,8 @@ import type { Expense, ExpenseCategoryDoc } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { deleteExpense } from "./actions";
 import { ExpenseFormDialog } from "./expense-form-dialog";
+import { useAuth } from "@/hooks/use-auth";
+import { logActivity } from "../logs/actions";
 
 interface ExpenseRowActionsProps {
   expense: Expense;
@@ -39,6 +41,7 @@ export function ExpenseRowActions({ expense, categories }: ExpenseRowActionsProp
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   async function handleDelete() {
     if (!expense.id) return;
@@ -46,6 +49,9 @@ export function ExpenseRowActions({ expense, categories }: ExpenseRowActionsProp
     try {
       const result = await deleteExpense(expense.id);
       if (result.success) {
+        if (user) {
+          await logActivity(user, 'DELETE_EXPENSE', `menghapus pengeluaran "${expense.description}".`);
+        }
         toast({
           title: "Sukses",
           description: result.message,
