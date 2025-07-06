@@ -49,8 +49,16 @@ const getInitialDiscount = () => {
     return savedDiscount ? parseFloat(savedDiscount) : 0;
 };
 
+// Type for the lightweight cart item stored in localStorage
+type StoredCartItem = {
+  productId: string;
+  quantity: number;
+  price: number;
+};
+
 export function SalesClientPage({ products, sales, categories }: SalesClientPageProps) {
   const [cart, setCart] = useState<CartItem[]>([])
+  const [isCartLoaded, setIsCartLoaded] = useState(false);
   const [discount, setDiscount] = useState(0) // Percentage
   const [transactionDate, setTransactionDate] = useState<Date>()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -60,11 +68,53 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
   const isMobile = useIsMobile()
   const [variantSelection, setVariantSelection] = useState<Product[] | null>(null)
 
-  // Load initial discount and date on client side
+  // Load initial settings and cart from localStorage on component mount
   useEffect(() => {
     setDiscount(getInitialDiscount());
     setTransactionDate(new Date());
+    
+    try {
+        const savedCartJson = localStorage.getItem("posCart");
+        if (savedCartJson) {
+            const storedCart: StoredCartItem[] = JSON.parse(savedCartJson);
+
+            const rehydratedCart: CartItem[] = storedCart.map(item => {
+                const product = products.find(p => p.id === item.productId);
+                if (!product) return null;
+                return {
+                    product,
+                    quantity: item.quantity,
+                    price: item.price,
+                };
+            }).filter((item): item is CartItem => item !== null);
+
+            setCart(rehydratedCart);
+        }
+    } catch (error) {
+        console.error("Failed to load or rehydrate cart:", error);
+        localStorage.removeItem("posCart");
+    }
+    
+    setIsCartLoaded(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    if (!isCartLoaded) {
+      return;
+    }
+    try {
+        const storableCart: StoredCartItem[] = cart.map(item => ({
+            productId: item.product.id!,
+            quantity: item.quantity,
+            price: item.price,
+        }));
+        localStorage.setItem("posCart", JSON.stringify(storableCart));
+    } catch (error) {
+        console.error("Failed to save cart to localStorage:", error);
+    }
+  }, [cart, isCartLoaded]);
 
   const salesCount = useMemo(() => {
     const counts: { [key: string]: number } = {};
@@ -203,7 +253,7 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
           title: "Transaksi Berhasil",
           description: result.message,
         })
-        setCart([])
+        setCart([]) // This will also clear localStorage via the useEffect
         setDiscount(getInitialDiscount())
         setTransactionDate(new Date())
       } else {
