@@ -33,7 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDoc = await getDoc(userRef);
 
         if (userDoc.exists()) {
-          setUser({ uid: firebaseUser.uid, ...userDoc.data() } as AppUser);
+          // Force every user to have the admin role for UI purposes
+          setUser({ uid: firebaseUser.uid, ...userDoc.data(), role: 'admin' } as AppUser);
         } else {
           // If user exists in Auth but not in Firestore, create them as admin (for legacy users)
           const newUserProfile: AppUser = {
