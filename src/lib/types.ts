@@ -6,6 +6,7 @@ export type Product = {
   costPrice: number
   stock: number
   description?: string
+  originalPrice?: number | null;
 }
 
 export type CartItem = {

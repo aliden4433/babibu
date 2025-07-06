@@ -28,9 +28,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 interface DiscountCampaignCardProps {
   discount: ScheduledDiscount;
+  onEdit: (discount: ScheduledDiscount) => void;
 }
 
-export function DiscountCampaignCard({ discount }: DiscountCampaignCardProps) {
+export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -102,8 +103,8 @@ export function DiscountCampaignCard({ discount }: DiscountCampaignCardProps) {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                           <DropdownMenuItem disabled>
-                               <Pencil className="mr-2 h-4 w-4"/> Edit (Segera Hadir)
+                           <DropdownMenuItem onClick={() => onEdit(discount)} disabled={discount.isActive}>
+                               <Pencil className="mr-2 h-4 w-4"/> Edit
                            </DropdownMenuItem>
                            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
                                <Trash2 className="mr-2 h-4 w-4"/> Hapus

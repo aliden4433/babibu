@@ -250,10 +250,15 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
           </div>
         ) : (
           <div className="space-y-4">
-            {cart.map((item) => (
+            {cart.map((item) => {
+              const isDiscounted = item.product.originalPrice && item.product.originalPrice > item.price;
+              return (
               <div key={item.product.id} className="space-y-2 border-b border-border pb-3 last:border-b-0">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium break-words flex-grow pr-2">{item.product.name}</p>
+                   <div>
+                      <p className="text-sm font-medium break-words flex-grow pr-2">{item.product.name}</p>
+                      {isDiscounted && <Badge variant="destructive" className="mt-1 text-xs">SALE</Badge>}
+                    </div>
                   <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 -mt-1 -mr-2" onClick={() => removeFromCart(item.product.id!)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
@@ -283,7 +288,7 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>
@@ -366,6 +371,8 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
     </Card>
   )
 
+  const formatCurrency = (amount: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount);
+
   if (isMobile === undefined) {
     return (
        <div className="flex justify-center items-center min-h-[calc(100vh-8rem)]">
@@ -408,14 +415,16 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
              <div className="divide-y divide-border rounded-md border">
                 {productGroups.length > 0 ? (
                 productGroups.map((group, index) => {
-                  const baseName = group[0].name.split(" - ")[0].trim();
+                  const product = group[0];
+                  const baseName = product.name.split(" - ")[0].trim();
                   const hasVariants = group.length > 1;
+                  const isDiscounted = !hasVariants && product.originalPrice && product.originalPrice > product.price;
 
                   const handleClick = () => {
                     if (hasVariants) {
                       setVariantSelection(group);
                     } else {
-                      addToCart(group[0], 1);
+                      addToCart(product, 1);
                     }
                   };
 
@@ -435,23 +444,25 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
                                       <ChevronDown className="h-3 w-3 ml-1" />
                                     </Badge>
                                 ) : (
-                                    <p className="font-semibold text-sm text-foreground">
-                                        {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(group[0].price)}
-                                    </p>
+                                    <div className="text-sm font-semibold text-foreground">
+                                        {isDiscounted ? (
+                                            <div className="flex flex-col items-end">
+                                               <span>{formatCurrency(product.price)}</span>
+                                               <span className="text-muted-foreground line-through font-normal text-xs">{formatCurrency(product.originalPrice!)}</span>
+                                            </div>
+                                        ) : (
+                                            <span>{formatCurrency(product.price)}</span>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         </div>
-                        <div className="text-xs text-muted-foreground mt-2 flex flex-col items-start text-left">
+                         <div className="text-xs text-muted-foreground mt-2 flex flex-col items-start text-left">
                            <div className="flex justify-between w-full">
                              <span>Stok:</span>
                              <span>{group.reduce((total, p) => total + p.stock, 0)}</span>
                            </div>
-                           {!hasVariants && (
-                            <div className="flex justify-between w-full">
-                                <span>Harga:</span>
-                                <span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(group[0].price)}</span>
-                            </div>
-                           )}
+                           {isDiscounted && <Badge variant="destructive" className="mt-1 text-xs">SALE</Badge>}
                         </div>
                     </button>
                   );
@@ -523,14 +534,16 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
           <div className="divide-y divide-border h-full max-h-[calc(100vh-14rem)] overflow-y-auto">
             {productGroups.length > 0 ? (
               productGroups.map((group, index) => {
-                  const baseName = group[0].name.split(" - ")[0].trim();
+                  const product = group[0];
+                  const baseName = product.name.split(" - ")[0].trim();
                   const hasVariants = group.length > 1;
+                  const isDiscounted = !hasVariants && product.originalPrice && product.originalPrice > product.price;
 
                   const handleClick = () => {
                     if (hasVariants) {
                       setVariantSelection(group);
                     } else {
-                      addToCart(group[0], 1);
+                      addToCart(product, 1);
                     }
                   };
 
@@ -542,14 +555,24 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
                       aria-label={`Pilih produk ${baseName}`}
                     >
                         <div className="flex justify-between items-start">
-                            <p className="font-medium text-sm truncate pr-4">{baseName}</p>
-                            <div className="flex-shrink-0">
+                            <div className="flex-grow pr-4">
+                                <p className="font-medium text-sm truncate">{baseName}</p>
+                                {isDiscounted && <Badge variant="destructive" className="mt-1 text-xs">SALE</Badge>}
+                            </div>
+                            <div className="flex-shrink-0 text-right">
                                 {hasVariants ? (
                                     <Badge variant="outline">{group.length} Varian</Badge>
                                 ) : (
-                                    <p className="font-semibold text-sm text-foreground">
-                                        {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(group[0].price)}
-                                    </p>
+                                    <div className="text-sm font-semibold text-foreground">
+                                      {isDiscounted ? (
+                                        <div className="flex items-baseline gap-2">
+                                          <span>{formatCurrency(product.price)}</span>
+                                          <span className="text-muted-foreground line-through font-normal text-xs">{formatCurrency(product.originalPrice!)}</span>
+                                        </div>
+                                      ) : (
+                                        <span>{formatCurrency(product.price)}</span>
+                                      )}
+                                    </div>
                                 )}
                             </div>
                         </div>

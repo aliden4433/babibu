@@ -8,7 +8,6 @@ import { z } from "zod";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
 import { id } from "date-fns/locale";
-import type { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -17,8 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { createScheduledDiscount } from "./actions";
-import type { Product, ScheduledDiscountProduct } from "@/lib/types";
+import { createScheduledDiscount, updateScheduledDiscount } from "./actions";
+import type { Product, ScheduledDiscount, ScheduledDiscountProduct } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,14 +45,16 @@ const formSchema = z.object({
 
 interface DiscountFormDialogProps {
   products: Product[];
-  children: React.ReactNode;
+  children?: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialData?: ScheduledDiscount;
 }
 
-export function DiscountFormDialog({ products, children, open, onOpenChange }: DiscountFormDialogProps) {
+export function DiscountFormDialog({ products, children, open, onOpenChange, initialData }: DiscountFormDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const isEditMode = !!initialData;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -74,19 +75,40 @@ export function DiscountFormDialog({ products, children, open, onOpenChange }: D
 
   useEffect(() => {
     if (open) {
-      form.reset({
-        name: "",
-        dateRange: { from: new Date(), to: addDays(new Date(), 7) },
-        products: products.map(p => ({
+      const defaultProducts = products.map(p => ({
           productId: p.id!,
           productName: p.name,
           originalPrice: p.price,
-          discountPrice: p.price, // Default to original price
+          discountPrice: p.price,
           isSelected: false,
-        })),
-      });
+      }));
+
+      if (isEditMode && initialData) {
+         const productsWithDiscountInfo = products.map(p => {
+          const discountInfo = initialData.products.find(dp => dp.productId === p.id);
+          return {
+            productId: p.id!,
+            productName: p.name,
+            originalPrice: discountInfo ? discountInfo.originalPrice : p.price,
+            discountPrice: discountInfo ? discountInfo.discountPrice : p.price,
+            isSelected: !!discountInfo,
+          };
+        });
+
+        form.reset({
+          name: initialData.name,
+          dateRange: { from: new Date(initialData.startDate), to: new Date(initialData.endDate) },
+          products: productsWithDiscountInfo,
+        });
+      } else {
+        form.reset({
+          name: "",
+          dateRange: { from: new Date(), to: addDays(new Date(), 7) },
+          products: defaultProducts,
+        });
+      }
     }
-  }, [open, products, form]);
+  }, [open, products, form, initialData, isEditMode]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -114,8 +136,13 @@ export function DiscountFormDialog({ products, children, open, onOpenChange }: D
         products: selectedProducts,
       };
       
-      const result = await createScheduledDiscount(discountData);
-
+      let result;
+      if (isEditMode && initialData?.id) {
+        result = await updateScheduledDiscount(initialData.id, discountData);
+      } else {
+        result = await createScheduledDiscount(discountData);
+      }
+      
       if (result.success) {
         toast({ title: "Sukses", description: result.message });
         onOpenChange(false);
@@ -138,9 +165,12 @@ export function DiscountFormDialog({ products, children, open, onOpenChange }: D
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Buat Jadwal Diskon Baru</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Jadwal Diskon" : "Buat Jadwal Diskon Baru"}</DialogTitle>
           <DialogDescription>
-            Atur nama, jadwal, pilih produk, dan tentukan harga diskonnya.
+            {isEditMode 
+              ? "Perbarui detail jadwal diskon Anda di bawah ini." 
+              : "Atur nama, jadwal, pilih produk, dan tentukan harga diskonnya."
+            }
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -267,7 +297,7 @@ export function DiscountFormDialog({ products, children, open, onOpenChange }: D
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Simpan Jadwal
+                {isEditMode ? "Simpan Perubahan" : "Simpan Jadwal"}
               </Button>
             </DialogFooter>
           </form>

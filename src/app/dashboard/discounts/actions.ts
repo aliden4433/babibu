@@ -33,10 +33,20 @@ export async function createScheduledDiscount(discount: Omit<ScheduledDiscount, 
 }
 
 // Update a scheduled discount
-export async function updateScheduledDiscount(id: string, discount: Partial<Omit<ScheduledDiscount, 'id'>>) {
+export async function updateScheduledDiscount(id: string, discountData: Omit<ScheduledDiscount, 'id' | 'isActive'>) {
     try {
         const discountRef = doc(db, DISCOUNTS_COLLECTION, id);
-        await updateDoc(discountRef, discount);
+        const discountSnap = await getDoc(discountRef);
+
+        if (!discountSnap.exists()) {
+            return { success: false, message: "Jadwal diskon tidak ditemukan." };
+        }
+
+        if (discountSnap.data().isActive) {
+             return { success: false, message: "Tidak dapat mengedit diskon yang sedang aktif." };
+        }
+        
+        await updateDoc(discountRef, discountData);
         revalidatePath('/dashboard/discounts');
         return { success: true, message: "Jadwal diskon berhasil diperbarui." };
     } catch (error) {
@@ -81,7 +91,10 @@ export async function activateDiscount(discountId: string) {
         // Update product prices
         for (const product of discount.products) {
             const productRef = doc(db, PRODUCTS_COLLECTION, product.productId);
-            batch.update(productRef, { price: product.discountPrice });
+            batch.update(productRef, { 
+                price: product.discountPrice,
+                originalPrice: product.originalPrice
+            });
         }
 
         // Mark discount as active
@@ -118,7 +131,10 @@ export async function deactivateDiscount(discountId: string) {
         // Revert product prices
         for (const product of discount.products) {
             const productRef = doc(db, PRODUCTS_COLLECTION, product.productId);
-            batch.update(productRef, { price: product.originalPrice });
+            batch.update(productRef, { 
+                price: product.originalPrice,
+                originalPrice: null
+            });
         }
 
         // Mark discount as inactive

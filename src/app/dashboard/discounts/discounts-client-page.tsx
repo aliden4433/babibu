@@ -16,12 +16,30 @@ interface DiscountsClientPageProps {
 
 export function DiscountsClientPage({ initialDiscounts, products }: DiscountsClientPageProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [discountToEdit, setDiscountToEdit] = useState<ScheduledDiscount | undefined>();
+
+  const handleOpenForm = (discount?: ScheduledDiscount) => {
+    setDiscountToEdit(discount);
+    setIsFormOpen(true);
+  };
+  
+  const handleCloseForm = (open: boolean) => {
+    if (!open) {
+      setDiscountToEdit(undefined);
+    }
+    setIsFormOpen(open);
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <DiscountFormDialog products={products} open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <Button>
+        <DiscountFormDialog 
+          products={products} 
+          open={isFormOpen} 
+          onOpenChange={handleCloseForm}
+          initialData={discountToEdit}
+        >
+          <Button onClick={() => handleOpenForm()}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Buat Jadwal Diskon
           </Button>
@@ -30,7 +48,7 @@ export function DiscountsClientPage({ initialDiscounts, products }: DiscountsCli
       {initialDiscounts.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {initialDiscounts.map((discount) => (
-            <DiscountCampaignCard key={discount.id} discount={discount} />
+            <DiscountCampaignCard key={discount.id} discount={discount} onEdit={handleOpenForm} />
           ))}
         </div>
       ) : (
