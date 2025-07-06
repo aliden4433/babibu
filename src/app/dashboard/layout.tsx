@@ -17,10 +17,12 @@ import {
   SidebarProvider,
   SidebarTrigger,
   useSidebar,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar"
 import { Icons } from "@/components/icons"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
+import { CartProvider, useCart } from "@/context/cart-context"
 
 const allNavItems = [
   { href: "/dashboard", icon: ShoppingCart, label: "Penjualan" },
@@ -40,6 +42,7 @@ function DashboardLayoutContent({
   const pathname = usePathname()
   const { toggleSidebar, state, isMobile } = useSidebar()
   const { user, signOut } = useAuth()
+  const { totalItemsInCart } = useCart()
 
   const navItems = allNavItems.filter(item => {
     if (!item.roles) return true; // Accessible to all roles if not specified
@@ -71,6 +74,9 @@ function DashboardLayoutContent({
                   >
                     <item.icon />
                     <span>{item.label}</span>
+                     {item.href === "/dashboard" && totalItemsInCart > 0 && (
+                        <SidebarMenuBadge>{totalItemsInCart}</SidebarMenuBadge>
+                    )}
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -123,8 +129,10 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <SidebarProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </SidebarProvider>
+    <CartProvider>
+      <SidebarProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </SidebarProvider>
+    </CartProvider>
   )
 }

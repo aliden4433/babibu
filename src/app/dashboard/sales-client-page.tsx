@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { ProductVariantDialog } from "./sales/product-variant-dialog"
 import { ExpenseFormDialog } from "@/app/dashboard/expenses/expense-form-dialog"
+import { useCart } from "@/context/cart-context"
 
 interface SalesClientPageProps {
   products: Product[]
@@ -49,16 +50,18 @@ const getInitialDiscount = () => {
     return savedDiscount ? parseFloat(savedDiscount) : 0;
 };
 
-// Type for the lightweight cart item stored in localStorage
-type StoredCartItem = {
-  productId: string;
-  quantity: number;
-  price: number;
-};
-
 export function SalesClientPage({ products, sales, categories }: SalesClientPageProps) {
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [isCartLoaded, setIsCartLoaded] = useState(false);
+  const {
+    storedCart,
+    addToCart: contextAddToCart,
+    updateQuantity,
+    updatePrice,
+    removeFromCart,
+    clearCart,
+    totalItemsInCart,
+    isCartLoaded,
+  } = useCart();
+
   const [discount, setDiscount] = useState(0) // Percentage
   const [transactionDate, setTransactionDate] = useState<Date>()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -68,53 +71,19 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
   const isMobile = useIsMobile()
   const [variantSelection, setVariantSelection] = useState<Product[] | null>(null)
 
-  // Load initial settings and cart from localStorage on component mount
   useEffect(() => {
     setDiscount(getInitialDiscount());
     setTransactionDate(new Date());
-    
-    try {
-        const savedCartJson = localStorage.getItem("posCart");
-        if (savedCartJson) {
-            const storedCart: StoredCartItem[] = JSON.parse(savedCartJson);
-
-            const rehydratedCart: CartItem[] = storedCart.map(item => {
-                const product = products.find(p => p.id === item.productId);
-                if (!product) return null;
-                return {
-                    product,
-                    quantity: item.quantity,
-                    price: item.price,
-                };
-            }).filter((item): item is CartItem => item !== null);
-
-            setCart(rehydratedCart);
-        }
-    } catch (error) {
-        console.error("Failed to load or rehydrate cart:", error);
-        localStorage.removeItem("posCart");
-    }
-    
-    setIsCartLoaded(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    if (!isCartLoaded) {
-      return;
-    }
-    try {
-        const storableCart: StoredCartItem[] = cart.map(item => ({
-            productId: item.product.id!,
-            quantity: item.quantity,
-            price: item.price,
-        }));
-        localStorage.setItem("posCart", JSON.stringify(storableCart));
-    } catch (error) {
-        console.error("Failed to save cart to localStorage:", error);
-    }
-  }, [cart, isCartLoaded]);
+  const cart: CartItem[] = useMemo(() => {
+    if (!isCartLoaded) return [];
+    return storedCart.map(item => {
+        const product = products.find(p => p.id === item.productId);
+        if (!product) return null; // Product might have been deleted
+        return { product, quantity: item.quantity, price: item.price };
+    }).filter((item): item is CartItem => item !== null);
+  }, [storedCart, products, isCartLoaded]);
 
   const salesCount = useMemo(() => {
     const counts: { [key: string]: number } = {};
@@ -167,19 +136,7 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
 
 
   const addToCart = (product: Product, quantity: number = 1, showToast = true) => {
-    setCart((prevCart) => {
-      const itemInCart = prevCart.find((item) => item.product.id === product.id)
-
-      if (itemInCart) {
-        return prevCart.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        )
-      }
-      return [...prevCart, { product, quantity, price: product.price }]
-    })
-
+    contextAddToCart(product, quantity);
     if (showToast) {
       toast({
         title: "Produk Ditambahkan",
@@ -188,36 +145,9 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
     }
   }
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity < 1) {
-      removeFromCart(productId)
-    } else {
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item
-        )
-      )
-    }
-  }
-  
-  const updatePrice = (productId: string, price: number) => {
-    if (isNaN(price) || price < 0) return
-
-    setCart((prevCart) =>
-      prevCart.map((item) =>
-        item.product.id === productId ? { ...item, price: price } : item
-      )
-    )
-  }
-
-  const removeFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId))
-  }
-
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0)
   const discountAmount = subtotal * (discount / 100)
   const total = subtotal - discountAmount
-  const totalItemsInCart = cart.reduce((acc, item) => acc + item.quantity, 0)
 
   async function handleProcessSale() {
     if (cart.length === 0) {
@@ -253,7 +183,7 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
           title: "Transaksi Berhasil",
           description: result.message,
         })
-        setCart([]) // This will also clear localStorage via the useEffect
+        clearCart()
         setDiscount(getInitialDiscount())
         setTransactionDate(new Date())
       } else {
