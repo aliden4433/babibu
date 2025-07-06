@@ -11,7 +11,7 @@ import { id } from "date-fns/locale";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -55,6 +55,7 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const isEditMode = !!initialData;
+  const isDiscountActive = isEditMode && !!initialData?.isActive;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -168,7 +169,9 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
           <DialogTitle>{isEditMode ? "Edit Jadwal Diskon" : "Buat Jadwal Diskon Baru"}</DialogTitle>
           <DialogDescription>
             {isEditMode 
-              ? "Perbarui detail jadwal diskon Anda di bawah ini." 
+              ? isDiscountActive 
+                ? "Diskon sedang aktif. Anda hanya dapat mengubah nama dan tanggalnya." 
+                : "Perbarui detail jadwal diskon Anda di bawah ini." 
               : "Atur nama, jadwal, pilih produk, dan tentukan harga diskonnya."
             }
           </DialogDescription>
@@ -238,57 +241,64 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
                 />
             </div>
             
-            <div>
+            <div className="space-y-2">
               <FormLabel>Pilih Produk & Atur Harga Diskon</FormLabel>
               {form.formState.errors.products && <p className="text-sm font-medium text-destructive">{form.formState.errors.products.message}</p>}
-              <ScrollArea className="h-64 mt-2 rounded-md border">
-                <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10">
-                        <TableRow>
-                            <TableHead className="w-[50px]">Pilih</TableHead>
-                            <TableHead>Nama Produk</TableHead>
-                            <TableHead className="text-right">Harga Asli</TableHead>
-                            <TableHead className="text-right w-[180px]">Harga Diskon</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {fields.map((field, index) => (
-                           <TableRow key={field.id} data-state={form.watch(`products.${index}.isSelected`) && "selected"}>
-                            <TableCell>
-                                <Controller
-                                    control={form.control}
-                                    name={`products.${index}.isSelected`}
-                                    render={({ field: controllerField }) => (
-                                        <Checkbox
-                                            checked={controllerField.value}
-                                            onCheckedChange={controllerField.onChange}
-                                        />
-                                    )}
-                                />
-                            </TableCell>
-                            <TableCell className="font-medium">{field.productName}</TableCell>
-                            <TableCell className="text-right">
-                                {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(field.originalPrice)}
-                            </TableCell>
-                            <TableCell>
-                               <Controller
-                                    control={form.control}
-                                    name={`products.${index}.discountPrice`}
-                                    render={({ field: controllerField }) => (
-                                        <Input
-                                            type="number"
-                                            className="text-right"
-                                            {...controllerField}
-                                            disabled={!form.watch(`products.${index}.isSelected`)}
-                                        />
-                                    )}
-                               />
-                            </TableCell>
-                           </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-              </ScrollArea>
+              <fieldset disabled={isDiscountActive}>
+                <ScrollArea className="h-64 mt-2 rounded-md border">
+                  <Table>
+                      <TableHeader className="sticky top-0 bg-background z-10">
+                          <TableRow>
+                              <TableHead className="w-[50px]">Pilih</TableHead>
+                              <TableHead>Nama Produk</TableHead>
+                              <TableHead className="text-right">Harga Asli</TableHead>
+                              <TableHead className="text-right w-[180px]">Harga Diskon</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                          {fields.map((field, index) => (
+                             <TableRow key={field.id} data-state={form.watch(`products.${index}.isSelected`) && "selected"}>
+                              <TableCell>
+                                  <Controller
+                                      control={form.control}
+                                      name={`products.${index}.isSelected`}
+                                      render={({ field: controllerField }) => (
+                                          <Checkbox
+                                              checked={controllerField.value}
+                                              onCheckedChange={controllerField.onChange}
+                                          />
+                                      )}
+                                  />
+                              </TableCell>
+                              <TableCell className="font-medium">{field.productName}</TableCell>
+                              <TableCell className="text-right">
+                                  {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(field.originalPrice)}
+                              </TableCell>
+                              <TableCell>
+                                 <Controller
+                                      control={form.control}
+                                      name={`products.${index}.discountPrice`}
+                                      render={({ field: controllerField }) => (
+                                          <Input
+                                              type="number"
+                                              className="text-right"
+                                              {...controllerField}
+                                              disabled={!form.watch(`products.${index}.isSelected`)}
+                                          />
+                                      )}
+                                 />
+                              </TableCell>
+                             </TableRow>
+                          ))}
+                      </TableBody>
+                  </Table>
+                </ScrollArea>
+              </fieldset>
+              {isDiscountActive && (
+                <FormDescription>
+                  Produk tidak dapat diubah untuk jadwal yang sedang aktif.
+                </FormDescription>
+              )}
             </div>
 
             <DialogFooter>

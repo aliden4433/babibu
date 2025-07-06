@@ -41,10 +41,6 @@ export async function updateScheduledDiscount(id: string, discountData: Omit<Sch
         if (!discountSnap.exists()) {
             return { success: false, message: "Jadwal diskon tidak ditemukan." };
         }
-
-        if (discountSnap.data().isActive) {
-             return { success: false, message: "Tidak dapat mengedit diskon yang sedang aktif." };
-        }
         
         await updateDoc(discountRef, discountData);
         revalidatePath('/dashboard/discounts');
@@ -69,6 +65,33 @@ export async function deleteScheduledDiscount(id: string) {
     } catch (error) {
         console.error("Error deleting scheduled discount: ", error);
         return { success: false, message: "Gagal menghapus jadwal diskon." };
+    }
+}
+
+// Duplicate a scheduled discount
+export async function duplicateScheduledDiscount(id: string) {
+    try {
+        const discountRef = doc(db, DISCOUNTS_COLLECTION, id);
+        const discountSnap = await getDoc(discountRef);
+
+        if (!discountSnap.exists()) {
+            return { success: false, message: "Jadwal diskon tidak ditemukan." };
+        }
+
+        const originalDiscount = discountSnap.data() as Omit<ScheduledDiscount, 'id'>;
+
+        const newDiscountData = {
+            ...originalDiscount,
+            name: `${originalDiscount.name} - Salinan`,
+            isActive: false, // Duplicated discount is always inactive
+        };
+        
+        await addDoc(collection(db, DISCOUNTS_COLLECTION), newDiscountData);
+        revalidatePath('/dashboard/discounts');
+        return { success: true, message: "Jadwal diskon berhasil diduplikasi." };
+    } catch (error) {
+        console.error("Error duplicating scheduled discount: ", error);
+        return { success: false, message: "Gagal menduplikasi jadwal diskon." };
     }
 }
 

@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { Calendar, Tag, MoreVertical, Play, StopCircle, Trash2, Pencil } from 'lucide-react';
+import { Calendar, Tag, MoreVertical, Play, StopCircle, Trash2, Pencil, Copy, Loader2 } from 'lucide-react';
 
 import type { ScheduledDiscount } from '@/lib/types';
 import {
@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { activateDiscount, deactivateDiscount, deleteScheduledDiscount } from './actions';
+import { activateDiscount, deactivateDiscount, deleteScheduledDiscount, duplicateScheduledDiscount } from './actions';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface DiscountCampaignCardProps {
@@ -34,6 +34,7 @@ interface DiscountCampaignCardProps {
 export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardProps) {
     const { toast } = useToast();
     const [isLoading, setIsLoading] = useState(false);
+    const [isDuplicating, setIsDuplicating] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     const handleActivate = async () => {
@@ -70,6 +71,17 @@ export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardP
         setIsLoading(false);
     };
 
+    const handleDuplicate = async () => {
+        setIsDuplicating(true);
+        const result = await duplicateScheduledDiscount(discount.id!);
+        if (result.success) {
+            toast({ title: 'Sukses', description: result.message });
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.message });
+        }
+        setIsDuplicating(false);
+    };
+
     const getStatus = () => {
         const now = new Date();
         const start = new Date(discount.startDate);
@@ -103,8 +115,12 @@ export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardP
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                           <DropdownMenuItem onClick={() => onEdit(discount)} disabled={discount.isActive}>
+                           <DropdownMenuItem onClick={() => onEdit(discount)}>
                                <Pencil className="mr-2 h-4 w-4"/> Edit
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
+                               {isDuplicating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Copy className="mr-2 h-4 w-4"/>}
+                               Duplikat
                            </DropdownMenuItem>
                            <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-600 focus:text-red-600 focus:bg-red-50">
                                <Trash2 className="mr-2 h-4 w-4"/> Hapus
