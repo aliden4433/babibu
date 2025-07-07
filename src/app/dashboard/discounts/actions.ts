@@ -53,14 +53,37 @@ export async function updateScheduledDiscount(id: string, discountData: Omit<Sch
 
 // Delete a scheduled discount
 export async function deleteScheduledDiscount(id: string) {
+    const discountRef = doc(db, DISCOUNTS_COLLECTION, id);
+    const batch = writeBatch(db);
+
     try {
-        const discountRef = doc(db, DISCOUNTS_COLLECTION, id);
         const discountSnap = await getDoc(discountRef);
-        if (discountSnap.exists() && discountSnap.data().isActive) {
-            return { success: false, message: "Gagal menghapus. Harap nonaktifkan diskon terlebih dahulu." };
+        if (!discountSnap.exists()) {
+            return { success: false, message: "Jadwal diskon tidak ditemukan." };
         }
-        await deleteDoc(discountRef);
+
+        const discount = discountSnap.data() as ScheduledDiscount;
+
+        // If the discount is active, we need to revert product prices first
+        if (discount.isActive) {
+            for (const product of discount.products) {
+                const productRef = doc(db, PRODUCTS_COLLECTION, product.productId);
+                batch.update(productRef, {
+                    price: product.originalPrice,
+                    originalPrice: null
+                });
+            }
+        }
+
+        // Now, delete the discount itself
+        batch.delete(discountRef);
+
+        // Commit all changes
+        await batch.commit();
+
         revalidatePath('/dashboard/discounts');
+        revalidatePath('/dashboard/products');
+        revalidatePath('/dashboard');
         return { success: true, message: "Jadwal diskon berhasil dihapus." };
     } catch (error) {
         console.error("Error deleting scheduled discount: ", error);
