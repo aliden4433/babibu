@@ -26,7 +26,7 @@ import { useCart } from "@/context/cart-context"
 
 const allNavItems = [
   { href: "/dashboard", icon: ShoppingCart, label: "Penjualan" },
-  { href: "/dashboard/products", icon: Package, label: "Produk" },
+  { href: "/dashboard/products", icon: Package, label: "Produk", roles: ["admin"] },
   { href: "/dashboard/stock-opname", icon: ClipboardCheck, label: "Stok Opname", roles: ["admin"]},
   { href: "/dashboard/discounts", icon: Tag, label: "Diskon Produk", roles: ["admin"] },
   { href: "/dashboard/sales-history", icon: History, label: "Riwayat Penjualan" },
