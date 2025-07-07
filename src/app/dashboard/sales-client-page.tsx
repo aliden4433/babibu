@@ -445,7 +445,20 @@ export function SalesClientPage({ products, sales, categories, defaultDiscount }
         </div>
 
         <Drawer>
-          <DrawerTrigger asChild>{CartTrigger}</DrawerTrigger>
+          <DrawerTrigger asChild>
+            <Button
+              className="fixed bottom-8 right-8 rounded-full h-16 w-16 shadow-lg z-20 md:hidden"
+              size="icon"
+            >
+              <ShoppingCart className="h-7 w-7" />
+              <span className="sr-only">Keranjang Belanja</span>
+              {totalItemsInCart > 0 && (
+                <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center rounded-full">
+                  {totalItemsInCart}
+                </Badge>
+              )}
+            </Button>
+          </DrawerTrigger>
           <DrawerContent className="p-0 flex flex-col h-[90vh]">
             <DrawerHeader className="p-4 pb-2 border-b text-left">
               <DrawerTitle>Pesanan Saat Ini</DrawerTitle>
