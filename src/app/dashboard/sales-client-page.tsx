@@ -4,6 +4,7 @@
 import { useState, useMemo, useEffect } from "react"
 import { Trash2, ShoppingCart, Loader2, Calendar as CalendarIcon, ChevronDown, PlusCircle } from "lucide-react"
 import { format } from "date-fns"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { addSale } from "./sales/actions"
 import type { CartItem, Product, Sale, ExpenseCategoryDoc } from "@/lib/types"
@@ -205,21 +206,6 @@ export function SalesClientPage({ products, sales, categories, defaultDiscount }
     }
   }
 
-  const CartTrigger = (
-    <Button
-      className="fixed bottom-8 right-8 rounded-full h-16 w-16 shadow-lg z-20 md:hidden"
-      size="icon"
-    >
-      <ShoppingCart className="h-7 w-7" />
-      <span className="sr-only">Keranjang Belanja</span>
-      {totalItemsInCart > 0 && (
-        <Badge className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center rounded-full">
-          {totalItemsInCart}
-        </Badge>
-      )}
-    </Button>
-  );
-
   const CartItems = (
     <div className="flex-grow overflow-y-auto">
       <div className="p-4">
@@ -231,45 +217,66 @@ export function SalesClientPage({ products, sales, categories, defaultDiscount }
           </div>
         ) : (
           <div className="space-y-4">
+            <AnimatePresence>
             {cart.map((item) => {
               const isDiscounted = item.product.originalPrice && item.product.originalPrice > item.price;
               return (
-              <div key={item.product.id} className="space-y-2 border-b border-border pb-3 last:border-b-0">
-                <div className="flex items-start justify-between gap-2">
-                   <div>
-                      <p className="text-sm font-medium break-words flex-grow pr-2">{item.product.name}</p>
-                      {isDiscounted && <Badge variant="destructive" className="mt-1 text-xs">SALE</Badge>}
+                <motion.div
+                  key={item.product.id}
+                  layout
+                  exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
+                  drag="x"
+                  dragSnapToOrigin
+                  dragElastic={0.1}
+                  onDragEnd={(event, info) => {
+                    if (info.offset.x < -60) {
+                      removeFromCart(item.product.id!);
+                      toast({
+                        title: "Item Dihapus",
+                        description: `${item.product.name} telah dihapus dari keranjang.`,
+                      });
+                    }
+                  }}
+                  className="cursor-grab active:cursor-grabbing"
+                >
+                  <div className="space-y-2 border-b border-border pb-3 last:border-b-0">
+                    <div className="flex items-start justify-between gap-2">
+                       <div>
+                          <p className="text-sm font-medium break-words flex-grow pr-2">{item.product.name}</p>
+                          {isDiscounted && <Badge variant="destructive" className="mt-1 text-xs">SALE</Badge>}
+                        </div>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 -mt-1 -mr-2" onClick={() => removeFromCart(item.product.id!)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
                     </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 -mt-1 -mr-2" onClick={() => removeFromCart(item.product.id!)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <div className="flex items-end justify-between gap-4">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor={`price-${item.product.id}`} className="text-xs text-muted-foreground">Harga</Label>
-                    <Input
-                      id={`price-${item.product.id}`}
-                      type="number"
-                      value={item.price}
-                      onChange={(e) => updatePrice(item.product.id!, parseFloat(e.target.value))}
-                      className="w-28 h-9 text-sm"
-                      step="1000"
-                    />
+                    <div className="flex items-end justify-between gap-4">
+                      <div className="grid gap-1.5">
+                        <Label htmlFor={`price-${item.product.id}`} className="text-xs text-muted-foreground">Harga</Label>
+                        <Input
+                          id={`price-${item.product.id}`}
+                          type="number"
+                          value={item.price}
+                          onChange={(e) => updatePrice(item.product.id!, parseFloat(e.target.value))}
+                          className="w-28 h-9 text-sm"
+                          step="1000"
+                        />
+                      </div>
+                       <div className="grid gap-1.5">
+                        <Label htmlFor={`qty-${item.product.id}`} className="text-xs text-muted-foreground">Jumlah</Label>
+                        <Input
+                          id={`qty-${item.product.id}`}
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateQuantity(item.product.id!, parseInt(e.target.value))}
+                          className="w-20 h-9 text-center text-sm"
+                          min="1"
+                        />
+                      </div>
+                    </div>
                   </div>
-                   <div className="grid gap-1.5">
-                    <Label htmlFor={`qty-${item.product.id}`} className="text-xs text-muted-foreground">Jumlah</Label>
-                    <Input
-                      id={`qty-${item.product.id}`}
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => updateQuantity(item.product.id!, parseInt(e.target.value))}
-                      className="w-20 h-9 text-center text-sm"
-                      min="1"
-                    />
-                  </div>
-                </div>
-              </div>
+                </motion.div>
             )})}
+            </AnimatePresence>
           </div>
         )}
       </div>
