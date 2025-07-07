@@ -226,10 +226,10 @@ export function SalesClientPage({ products, sales, categories, defaultDiscount }
                   layout
                   exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
                   drag="x"
-                  dragSnapToOrigin
-                  dragElastic={0.1}
+                  dragElastic={0.2}
                   onDragEnd={(event, info) => {
-                    if (info.offset.x < -60) {
+                    const swipeThreshold = 60;
+                    if (Math.abs(info.offset.x) > swipeThreshold) {
                       removeFromCart(item.product.id!);
                       toast({
                         title: "Item Dihapus",
