@@ -111,6 +111,10 @@ export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardP
 
     const status = getStatus();
 
+    const startDateFmt = format(new Date(discount.startDate), 'd MMM yyyy', { locale: id });
+    const endDateFmt = format(new Date(discount.endDate), 'd MMM yyyy', { locale: id });
+    const displayDate = startDateFmt === endDateFmt ? startDateFmt : `${startDateFmt} - ${endDateFmt}`;
+
     return (
         <>
         <Card>
@@ -120,7 +124,7 @@ export function DiscountCampaignCard({ discount, onEdit }: DiscountCampaignCardP
                         <CardTitle className="text-lg">{discount.name}</CardTitle>
                         <CardDescription className="flex items-center gap-2 pt-1">
                             <Calendar className="h-4 w-4" />
-                            <span>{format(new Date(discount.startDate), 'd MMM yyyy', { locale: id })} - {format(new Date(discount.endDate), 'd MMM yyyy', { locale: id })}</span>
+                            <span>{displayDate}</span>
                         </CardDescription>
                     </div>
                     <DropdownMenu>

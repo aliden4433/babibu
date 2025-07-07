@@ -28,11 +28,11 @@ const allNavItems = [
   { href: "/dashboard", icon: ShoppingCart, label: "Penjualan" },
   { href: "/dashboard/products", icon: Package, label: "Produk", roles: ["admin"] },
   { href: "/dashboard/stock-opname", icon: ClipboardCheck, label: "Stok Opname", roles: ["admin"]},
-  { href: "/dashboard/discounts", icon: Tag, label: "Diskon Produk", roles: ["admin"] },
+  { href: "/dashboard/discounts", icon: Tag, label: "Diskon Produk", roles: ["admin", "cashier"] },
   { href: "/dashboard/sales-history", icon: History, label: "Riwayat Penjualan" },
   { href: "/dashboard/expenses", icon: Wallet, label: "Pengeluaran", roles: ["admin", "cashier"] },
   { href: "/dashboard/reports", icon: BarChart2, label: "Laporan", roles: ["admin"] },
-  { href: "/dashboard/logs", icon: History, label: "Log Aktivitas", roles: ["admin"] },
+  { href: "/dashboard/logs", icon: History, label: "Log Aktivitas", roles: ["admin", "cashier"] },
   { href: "/dashboard/settings", icon: Settings, label: "Pengaturan", roles: ["admin"] },
 ];
 

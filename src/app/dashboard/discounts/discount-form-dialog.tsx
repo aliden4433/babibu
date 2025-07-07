@@ -6,7 +6,7 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 import { id } from "date-fns/locale";
 
 import { Button } from "@/components/ui/button";
@@ -35,10 +35,7 @@ const productSchema = z.object({
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama jadwal tidak boleh kosong."),
-  dateRange: z.object({
-    from: z.date({ required_error: "Tanggal mulai harus diisi." }),
-    to: z.date({ required_error: "Tanggal selesai harus diisi." }),
-  }),
+  date: z.date({ required_error: "Tanggal harus diisi." }),
   products: z.array(productSchema)
     .refine(arr => arr.some(p => p.isSelected), {
       message: "Pilih setidaknya satu produk.",
@@ -64,10 +61,7 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      dateRange: {
-        from: new Date(),
-        to: addDays(new Date(), 7),
-      },
+      date: new Date(),
       products: [],
     },
   });
@@ -101,13 +95,13 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
 
         form.reset({
           name: initialData.name,
-          dateRange: { from: new Date(initialData.startDate), to: new Date(initialData.endDate) },
+          date: new Date(initialData.startDate),
           products: productsWithDiscountInfo,
         });
       } else {
         form.reset({
           name: "",
-          dateRange: { from: new Date(), to: addDays(new Date(), 7) },
+          date: new Date(),
           products: defaultProducts,
         });
       }
@@ -135,8 +129,8 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
     try {
       const discountData = {
         name: values.name,
-        startDate: values.dateRange.from.toISOString(),
-        endDate: values.dateRange.to.toISOString(),
+        startDate: values.date.toISOString(),
+        endDate: values.date.toISOString(),
         products: selectedProducts,
       };
       
@@ -204,7 +198,7 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
                 />
                 <FormField
                   control={form.control}
-                  name="dateRange"
+                  name="date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col pt-2">
                       <FormLabel>Tanggal Diskon</FormLabel>
@@ -215,21 +209,14 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
                               variant={"outline"}
                               className={cn(
                                 "w-full justify-start text-left font-normal",
-                                !field.value?.from && "text-muted-foreground"
+                                !field.value && "text-muted-foreground"
                               )}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {field.value?.from ? (
-                                field.value.to ? (
-                                  <>
-                                    {format(field.value.from, "d MMM yyyy", { locale: id })} - {" "}
-                                    {format(field.value.to, "d MMM yyyy", { locale: id })}
-                                  </>
-                                ) : (
-                                  format(field.value.from, "d MMM yyyy", { locale: id })
-                                )
+                              {field.value ? (
+                                format(field.value, "d MMMM yyyy", { locale: id })
                               ) : (
-                                <span>Pilih rentang tanggal</span>
+                                <span>Pilih tanggal</span>
                               )}
                             </Button>
                           </FormControl>
@@ -237,11 +224,12 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             initialFocus
-                            mode="range"
-                            defaultMonth={field.value?.from}
+                            mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
-                            numberOfMonths={2}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
                           />
                         </PopoverContent>
                       </Popover>
@@ -252,7 +240,7 @@ export function DiscountFormDialog({ products, children, open, onOpenChange, ini
             </div>
             
             <div className="space-y-2">
-              <FormLabel>Pilih Produk & Atur Harga Diskon</FormLabel>
+              <FormLabel>Pilih Produk &amp; Atur Harga Diskon</FormLabel>
               {form.formState.errors.products && <p className="text-sm font-medium text-destructive">{form.formState.errors.products.message}</p>}
               <fieldset disabled={isDiscountActive}>
                 <ScrollArea className="h-64 mt-2 rounded-md border">
