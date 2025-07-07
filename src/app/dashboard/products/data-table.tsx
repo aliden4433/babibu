@@ -35,7 +35,6 @@ import { ProductFormDialog } from "./product-form-dialog"
 import { ExpenseRowActions } from "@/app/dashboard/expenses/expense-row-actions"
 import { ExpenseFormDialog } from "@/app/dashboard/expenses/expense-form-dialog"
 import { ExpensesDataTableToolbar } from "@/app/dashboard/expenses/expenses-data-table-toolbar";
-import { DiscountsDataTableToolbar } from "@/app/dashboard/discounts/discounts-data-table-toolbar";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -232,8 +231,6 @@ export function DataTable<TData, TValue>({
     switch (entityName) {
       case "pengeluaran":
         return <ExpensesDataTableToolbar table={table} userRole={userRole} filterColumnId={filterColumnId} filterPlaceholder={filterPlaceholder} />;
-      case "diskon":
-        return <DiscountsDataTableToolbar table={table} userRole={userRole} filterColumnId={filterColumnId} filterPlaceholder={filterPlaceholder} />;
       default:
         return <DataTableToolbar table={table} userRole={userRole} filterColumnId={filterColumnId} filterPlaceholder={filterPlaceholder} />;
     }
