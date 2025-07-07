@@ -12,6 +12,7 @@ import {
   query,
   orderBy,
   writeBatch,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ExpenseCategoryDoc } from "@/lib/types";
@@ -85,17 +86,16 @@ async function clearCollection(collectionName: string) {
 
 export async function resetAllData() {
     try {
-        // Daftar semua koleksi yang ingin di-reset
-        const collectionsToReset = ["products", "sales", "expenses", "scheduled_discounts", "expense_categories"];
+        // Daftar semua koleksi yang ingin di-reset, termasuk counters dan logs
+        const collectionsToReset = ["products", "sales", "expenses", "scheduled_discounts", "expense_categories", "counters", "activity_logs"];
         
         for (const collectionName of collectionsToReset) {
             await clearCollection(collectionName);
         }
         
-        // Inisialisasi ulang jika perlu, misal: membuat counter
-        const counterRef = doc(db, "counters", "sales");
-        await addDoc(collection(db, "counters"), {});
-
+        // Inisialisasi ulang counter penjualan dengan benar menggunakan setDoc
+        const salesCounterRef = doc(db, "counters", "sales");
+        await setDoc(salesCounterRef, { count: 0 });
 
         // Revalidasi semua path yang relevan
         revalidatePath("/dashboard");
@@ -105,6 +105,7 @@ export async function resetAllData() {
         revalidatePath("/dashboard/reports");
         revalidatePath("/dashboard/settings");
         revalidatePath("/dashboard/discounts");
+        revalidatePath("/dashboard/logs");
 
         return { success: true, message: "Semua data aplikasi berhasil direset." };
     } catch (error) {
