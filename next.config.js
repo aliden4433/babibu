@@ -1,22 +1,2 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "placehold.co",
-        port: "",
-        pathname: "/**",
-      },
-    ],
-  },
-};
-
-module.exports = nextConfig;
+// This file has been replaced by next.config.ts to better align with the project's TypeScript setup for Vercel deployment.
+// It is intentionally left empty.

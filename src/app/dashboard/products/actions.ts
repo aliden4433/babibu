@@ -25,6 +25,7 @@ export async function addProduct(product: Omit<Product, "id">) {
     const productsCol = collection(db, "products")
     await addDoc(productsCol, product)
     revalidatePath("/dashboard/products")
+    revalidatePath("/dashboard")
     return { success: true, message: "Produk berhasil ditambahkan." }
   } catch (error) {
     console.error("Error adding product: ", error)
@@ -44,6 +45,7 @@ export async function addProductsBatch(products: Omit<Product, "id">[]) {
     
     await batch.commit();
     revalidatePath("/dashboard/products");
+    revalidatePath("/dashboard")
     return { success: true, message: `${products.length} produk berhasil diimpor.` };
   } catch (error) {
     console.error("Error importing products: ", error);
@@ -57,6 +59,7 @@ export async function duplicateProduct(product: Omit<Product, "id">) {
     const newProduct = { ...product, name: `${product.name} - Salinan` }
     await addDoc(productsCol, newProduct)
     revalidatePath("/dashboard/products")
+    revalidatePath("/dashboard")
     return { success: true, message: "Produk berhasil diduplikasi." }
   } catch (error) {
     console.error("Error duplicating product: ", error)
@@ -69,6 +72,7 @@ export async function updateProduct(id: string, product: Omit<Product, "id">) {
     const productRef = doc(db, "products", id)
     await updateDoc(productRef, product)
     revalidatePath("/dashboard/products")
+    revalidatePath("/dashboard")
     return { success: true, message: "Produk berhasil diperbarui." }
   } catch (error) {
     console.error("Error updating product: ", error)
@@ -81,6 +85,7 @@ export async function deleteProduct(id: string) {
     const productRef = doc(db, "products", id)
     await deleteDoc(productRef)
     revalidatePath("/dashboard/products")
+    revalidatePath("/dashboard")
     return { success: true, message: "Produk berhasil dihapus." }
   } catch (error) {
     console.error("Error deleting product: ", error)
@@ -97,6 +102,7 @@ export async function deleteProducts(ids: string[]) {
     });
     await batch.commit();
     revalidatePath("/dashboard/products");
+    revalidatePath("/dashboard")
     return { success: true, message: `${ids.length} produk berhasil dihapus.` };
   } catch (error) {
     console.error("Error deleting products: ", error);
@@ -114,6 +120,7 @@ export async function updateProductsBatch(ids: string[], data: Partial<Omit<Prod
     });
     await batch.commit();
     revalidatePath("/dashboard/products");
+    revalidatePath("/dashboard")
     return { success: true, message: `${ids.length} produk berhasil diperbarui.` };
   } catch (error) {
     console.error("Error updating products: ", error);
