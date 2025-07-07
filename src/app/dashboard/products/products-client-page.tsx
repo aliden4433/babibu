@@ -10,7 +10,6 @@ import { ProductFormDialog } from "./product-form-dialog"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
-import type { ColumnDef } from "@tanstack/react-table"
 import { ProductImportButton } from "./product-import-button"
 
 interface ProductsClientPageProps {
@@ -23,17 +22,6 @@ export function ProductsClientPage({ products }: ProductsClientPageProps) {
     const userRole = user?.role
 
     const columns = React.useMemo(() => getColumns(userRole), [userRole]);
-
-    const visibleColumns = React.useMemo(() => {
-        if (userRole === 'admin') {
-            return columns;
-        }
-        return columns.filter(col => 
-            col.id !== 'select' && 
-            col.id !== 'actions' && 
-            col.id !== 'costPrice'
-        );
-    }, [userRole, columns]) as ColumnDef<Product>[];
 
     return (
         <div className="space-y-4">
@@ -49,7 +37,7 @@ export function ProductsClientPage({ products }: ProductsClientPageProps) {
                 )}
             </div>
             <DataTable 
-              columns={visibleColumns} 
+              columns={columns} 
               data={products} 
               userRole={userRole}
               filterColumnId="name"
