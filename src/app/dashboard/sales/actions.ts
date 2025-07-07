@@ -52,6 +52,7 @@ export async function addSale(saleData: {
         })),
         subtotal,
         discount: discountAmount,
+        discountPercentage: saleData.discountPercentage,
         total,
         totalCost,
         profit,

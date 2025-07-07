@@ -13,6 +13,7 @@ import {
   orderBy,
   writeBatch,
   setDoc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { ExpenseCategoryDoc } from "@/lib/types";
@@ -87,7 +88,7 @@ async function clearCollection(collectionName: string) {
 export async function resetAllData() {
     try {
         // Daftar semua koleksi yang ingin di-reset, termasuk counters dan logs
-        const collectionsToReset = ["products", "sales", "expenses", "scheduled_discounts", "expense_categories", "counters", "activity_logs"];
+        const collectionsToReset = ["products", "sales", "expenses", "scheduled_discounts", "expense_categories", "counters", "activity_logs", "settings"];
         
         for (const collectionName of collectionsToReset) {
             await clearCollection(collectionName);
@@ -112,4 +113,32 @@ export async function resetAllData() {
         console.error("Error resetting all data: ", error);
         return { success: false, message: "Gagal mereset data aplikasi." };
     }
+}
+
+export async function getGlobalSettings() {
+  try {
+    const settingsRef = doc(db, "settings", "global");
+    const settingsSnap = await getDoc(settingsRef);
+    if (settingsSnap.exists()) {
+      return settingsSnap.data() as { defaultDiscount: number };
+    }
+    console.log('[getGlobalSettings] No global settings found, returning default.');
+    return { defaultDiscount: 0 };
+  } catch (error) {
+    console.error("Error fetching global settings: ", error);
+    return { defaultDiscount: 0 };
+  }
+}
+
+export async function updateGlobalSettings(data: { defaultDiscount: number }) {
+  try {
+    const settingsRef = doc(db, "settings", "global");
+    await setDoc(settingsRef, data, { merge: true });
+    revalidatePath('/dashboard/settings');
+    revalidatePath('/dashboard');
+    return { success: true, message: "Pengaturan berhasil diperbarui." };
+  } catch (error) {
+    console.error("Error updating global settings: ", error);
+    return { success: false, message: "Gagal memperbarui pengaturan." };
+  }
 }

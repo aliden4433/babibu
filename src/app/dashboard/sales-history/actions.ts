@@ -10,6 +10,7 @@ export type SaleUpdatePayload = {
   id: string;
   items: SaleItem[];
   discount: number;
+  discountPercentage: number;
   total: number;
   subtotal: number;
   profit: number;
@@ -69,6 +70,7 @@ export async function updateSale(payload: SaleUpdatePayload) {
       transaction.update(saleRef, {
         items: payload.items,
         discount: payload.discount,
+        discountPercentage: payload.discountPercentage,
         total: payload.total,
         subtotal: payload.subtotal,
         profit: payload.profit,

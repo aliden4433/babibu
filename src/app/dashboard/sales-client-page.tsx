@@ -41,18 +41,11 @@ import { logActivity } from "./logs/actions"
 interface SalesClientPageProps {
   products: Product[]
   sales: Sale[]
-  categories: ExpenseCategoryDoc[]
+  categories: ExpenseCategoryDoc[],
+  defaultDiscount: number,
 }
 
-const getInitialDiscount = () => {
-    if (typeof window === "undefined") {
-      return 0; // Default for SSR
-    }
-    const savedDiscount = localStorage.getItem("defaultDiscount");
-    return savedDiscount ? parseFloat(savedDiscount) : 0;
-};
-
-export function SalesClientPage({ products, sales, categories }: SalesClientPageProps) {
+export function SalesClientPage({ products, sales, categories, defaultDiscount }: SalesClientPageProps) {
   const {
     storedCart,
     addToCart: contextAddToCart,
@@ -65,7 +58,7 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
   } = useCart();
   const { user } = useAuth();
 
-  const [discount, setDiscount] = useState(0) // Percentage
+  const [discount, setDiscount] = useState(defaultDiscount) // Percentage
   const [transactionDate, setTransactionDate] = useState<Date>()
   const [isProcessing, setIsProcessing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -75,9 +68,9 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
   const [variantSelection, setVariantSelection] = useState<Product[] | null>(null)
 
   useEffect(() => {
-    setDiscount(getInitialDiscount());
     setTransactionDate(new Date());
-  }, []);
+    setDiscount(defaultDiscount);
+  }, [defaultDiscount]);
 
   const cart: CartItem[] = useMemo(() => {
     if (!isCartLoaded) return [];
@@ -190,7 +183,7 @@ export function SalesClientPage({ products, sales, categories }: SalesClientPage
           description: result.message,
         })
         clearCart()
-        setDiscount(getInitialDiscount())
+        setDiscount(defaultDiscount)
         setTransactionDate(new Date())
       } else {
         toast({

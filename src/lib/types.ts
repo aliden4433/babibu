@@ -33,6 +33,7 @@ export type Sale = {
   items: SaleItem[]
   subtotal: number
   discount: number
+  discountPercentage: number
   total: number
   totalCost: number
   profit: number

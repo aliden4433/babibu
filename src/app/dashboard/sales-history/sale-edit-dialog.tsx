@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
-import { Loader2, Calendar as CalendarIcon, X, PlusCircle, Check, ChevronsUpDown } from "lucide-react"
+import { Loader2, Calendar as CalendarIcon, X, PlusCircle, Check } from "lucide-react"
 
 import type { Product, Sale, SaleItem } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -31,30 +31,53 @@ export function SaleEditDialog({ open, onOpenChange, sale, products }: SaleEditD
   const [items, setItems] = useState<SaleItem[]>([]);
   const [transactionDate, setTransactionDate] = useState<Date | undefined>();
   const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [openCombobox, setOpenCombobox] = useState(false)
   const { toast } = useToast();
 
   useEffect(() => {
     if (sale) {
-      setItems(sale.items.map(item => ({ ...item }))); // Deep copy
+      setItems(sale.items.map(item => ({ ...item })));
       setTransactionDate(new Date(sale.date));
       setDiscountAmount(sale.discount);
+      setDiscountPercentage(sale.discountPercentage || 0);
     } else {
-      // Reset when dialog is closed
       setItems([]);
       setTransactionDate(undefined);
       setDiscountAmount(0);
+      setDiscountPercentage(0);
     }
   }, [sale]);
 
-  const { subtotal, totalCost, profit, total } = useMemo(() => {
-    const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = useMemo(() => {
+    return items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  }, [items]);
+  
+  const { totalCost, profit, total } = useMemo(() => {
     const totalCost = items.reduce((acc, item) => acc + (item.costPrice || 0) * item.quantity, 0);
     const total = subtotal - discountAmount;
     const profit = total - totalCost;
-    return { subtotal, totalCost, profit, total };
-  }, [items, discountAmount]);
+    return { totalCost, profit, total };
+  }, [items, discountAmount, subtotal]);
+
+  const handleDiscountPercentageChange = (value: number) => {
+    const percentage = Math.max(0, Math.min(100, value || 0));
+    setDiscountPercentage(percentage);
+    const newAmount = subtotal * (percentage / 100);
+    setDiscountAmount(newAmount);
+  };
+
+  const handleDiscountAmountChange = (value: number) => {
+    const amount = Math.max(0, value || 0);
+    setDiscountAmount(amount);
+    if (subtotal > 0) {
+        const newPercentage = (amount / subtotal) * 100;
+        setDiscountPercentage(newPercentage);
+    } else {
+        setDiscountPercentage(0);
+    }
+  };
 
   const handleItemChange = (productId: string, field: 'quantity' | 'price', value: number) => {
     setItems(currentItems =>
@@ -94,6 +117,7 @@ export function SaleEditDialog({ open, onOpenChange, sale, products }: SaleEditD
         items,
         date: transactionDate.toISOString(),
         discount: discountAmount,
+        discountPercentage,
         subtotal,
         totalCost,
         profit,
@@ -130,30 +154,46 @@ export function SaleEditDialog({ open, onOpenChange, sale, products }: SaleEditD
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-                <Label htmlFor="transaction-date">Tanggal Transaksi</Label>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button id="transaction-date" variant={"outline"} className={cn("w-full justify-start text-left font-normal", !transactionDate && "text-muted-foreground")}>
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {transactionDate ? format(transactionDate, "d MMMM yyyy", { locale: id }) : <span>Pilih tanggal</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={transactionDate} onSelect={setTransactionDate} initialFocus />
-                    </PopoverContent>
-                </Popover>
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="discount-amount">Potongan Diskon (Rp)</Label>
-                <Input
-                    id="discount-amount"
-                    type="number"
-                    value={discountAmount}
-                    onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                />
-            </div>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+              <Label htmlFor="transaction-date">Tanggal Transaksi</Label>
+              <Popover>
+                  <PopoverTrigger asChild>
+                      <Button id="transaction-date" variant={"outline"} className={cn("w-full justify-start text-left font-normal", !transactionDate && "text-muted-foreground")}>
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {transactionDate ? format(transactionDate, "d MMMM yyyy", { locale: id }) : <span>Pilih tanggal</span>}
+                      </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={transactionDate} onSelect={setTransactionDate} initialFocus />
+                  </PopoverContent>
+              </Popover>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                  <Label htmlFor="discount-percentage">Diskon (%)</Label>
+                  <Input
+                      id="discount-percentage"
+                      type="number"
+                      value={discountPercentage}
+                      onChange={(e) => handleDiscountPercentageChange(parseFloat(e.target.value))}
+                      step="0.1"
+                      min="0"
+                      max="100"
+                  />
+              </div>
+              <div className="space-y-2">
+                  <Label htmlFor="discount-amount">Potongan Diskon (Rp)</Label>
+                  <Input
+                      id="discount-amount"
+                      type="number"
+                      value={discountAmount}
+                      onChange={(e) => handleDiscountAmountChange(parseFloat(e.target.value))}
+                      step="100"
+                      min="0"
+                  />
+              </div>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -221,7 +261,7 @@ export function SaleEditDialog({ open, onOpenChange, sale, products }: SaleEditD
                 <span>{formatCurrency(subtotal)}</span>
             </div>
              <div className="flex justify-between text-sm">
-                <span>Diskon</span>
+                <span>Diskon ({discountPercentage.toFixed(1)}%)</span>
                 <span className="text-destructive">-{formatCurrency(discountAmount)}</span>
             </div>
             <Separator />

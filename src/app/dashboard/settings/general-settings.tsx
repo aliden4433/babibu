@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/hooks/use-auth"
 import { Badge } from "@/components/ui/badge"
-import { resetAllData } from "./actions"
+import { resetAllData, updateGlobalSettings } from "./actions"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,45 +52,50 @@ const discountFormSchema = z.object({
     .max(100, "Diskon tidak boleh lebih dari 100."),
 })
 
-export function GeneralSettings() {
+interface GeneralSettingsProps {
+  settings: {
+    defaultDiscount: number;
+  }
+}
+
+export function GeneralSettings({ settings }: GeneralSettingsProps) {
   const { theme, setTheme } = useTheme()
   const { toast } = useToast()
   const { user } = useAuth()
   
   const [mounted, setMounted] = useState(false)
-  const [defaultDiscount, setDefaultDiscount] = useState(0)
   const [isResetting, setIsResetting] = useState(false)
   const [isResetAlertOpen, setIsResetAlertOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
-    const savedDiscount = localStorage.getItem("defaultDiscount")
-    if (savedDiscount) {
-      const parsedDiscount = parseFloat(savedDiscount)
-      if (!isNaN(parsedDiscount)) {
-        setDefaultDiscount(parsedDiscount)
-      }
-    }
   }, [])
 
   const discountForm = useForm<z.infer<typeof discountFormSchema>>({
     resolver: zodResolver(discountFormSchema),
-    values: {
-      discount: defaultDiscount,
+    defaultValues: {
+      discount: settings.defaultDiscount || 0,
     },
   })
-
+  
   useEffect(() => {
-    discountForm.reset({ discount: defaultDiscount })
-  }, [defaultDiscount, discountForm])
+    discountForm.reset({ discount: settings.defaultDiscount || 0 })
+  }, [settings.defaultDiscount, discountForm])
 
-  function onDiscountSubmit(values: z.infer<typeof discountFormSchema>) {
-    localStorage.setItem("defaultDiscount", values.discount.toString())
-    setDefaultDiscount(values.discount)
-    toast({
-      title: "Pengaturan Disimpan",
-      description: `Diskon default telah diatur ke ${values.discount}%.`,
-    })
+  async function onDiscountSubmit(values: z.infer<typeof discountFormSchema>) {
+    const result = await updateGlobalSettings({ discount: values.discount });
+    if (result.success) {
+      toast({
+        title: "Pengaturan Disimpan",
+        description: `Diskon default telah diatur ke ${values.discount}%.`,
+      })
+    } else {
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: result.message,
+      });
+    }
   }
 
   const handleResetData = async () => {
@@ -184,7 +189,7 @@ export function GeneralSettings() {
                       <Input type="number" step="0.1" placeholder="0" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Diskon ini akan otomatis diterapkan pada setiap transaksi baru.
+                      Diskon ini akan otomatis diterapkan pada setiap transaksi baru untuk semua pengguna.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
