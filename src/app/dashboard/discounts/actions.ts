@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, writeBatch, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { ScheduledDiscount } from '@/lib/types';
+import type { ScheduledDiscount, Product } from '@/lib/types';
 
 const DISCOUNTS_COLLECTION = 'scheduled_discounts';
 const PRODUCTS_COLLECTION = 'products';
@@ -163,13 +163,26 @@ export async function deactivateDiscount(discountId: string) {
             return { success: false, message: "Diskon tidak sedang aktif." };
         }
 
-        // Revert product prices
-        for (const product of discount.products) {
-            const productRef = doc(db, PRODUCTS_COLLECTION, product.productId);
-            batch.update(productRef, { 
-                price: product.originalPrice,
-                originalPrice: null
-            });
+        // Get all product documents to read their current state
+        const productRefs = discount.products.map(p => doc(db, PRODUCTS_COLLECTION, p.productId));
+        const productSnaps = await Promise.all(productRefs.map(ref => getDoc(ref)));
+
+        // Prepare batch updates
+        for (const productSnap of productSnaps) {
+            if (productSnap.exists()) {
+                const productData = productSnap.data() as Product;
+                // The price to revert to is stored in the product's `originalPrice` field.
+                const priceToRevertTo = productData.originalPrice;
+
+                // Only revert if there's an original price to revert to.
+                if (priceToRevertTo != null) {
+                    batch.update(productSnap.ref, { 
+                        price: priceToRevertTo,
+                        originalPrice: null
+                    });
+                }
+            }
+            // If product doesn't exist, we just ignore it. No update is added to the batch.
         }
 
         // Mark discount as inactive
