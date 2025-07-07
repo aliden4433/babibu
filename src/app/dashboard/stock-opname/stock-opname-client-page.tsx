@@ -18,6 +18,7 @@ import { logActivity } from '../logs/actions';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Form } from '@/components/ui/form';
 
 const stockOpnameProductSchema = z.object({
   id: z.string(),
