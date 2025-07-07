@@ -3,7 +3,7 @@
 
 import * as React from "react"
 import type { Product } from "@/lib/types"
-import { columns } from "./columns"
+import { getColumns } from "./columns"
 import { DataTable } from "./data-table"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { ProductFormDialog } from "./product-form-dialog"
@@ -22,6 +22,8 @@ export function ProductsClientPage({ products }: ProductsClientPageProps) {
     const { user } = useAuth()
     const userRole = user?.role
 
+    const columns = React.useMemo(() => getColumns(userRole), [userRole]);
+
     const visibleColumns = React.useMemo(() => {
         if (userRole === 'admin') {
             return columns;
@@ -31,7 +33,7 @@ export function ProductsClientPage({ products }: ProductsClientPageProps) {
             col.id !== 'actions' && 
             col.id !== 'costPrice'
         );
-    }, [userRole]) as ColumnDef<Product>[];
+    }, [userRole, columns]) as ColumnDef<Product>[];
 
     return (
         <div className="space-y-4">

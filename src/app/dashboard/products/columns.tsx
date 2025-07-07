@@ -7,12 +7,14 @@ import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import type { Product } from "@/lib/types"
+import type { Product, AppUser } from "@/lib/types"
 import { ProductRowActions } from "./product-row-actions"
 import { ProductFormDialog } from "./product-form-dialog"
 
-const NameCell = ({ product }: { product: Product }) => {
+const NameCell = ({ product, userRole }: { product: Product, userRole?: AppUser['role'] }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false)
+
+  const canEdit = userRole === 'admin';
 
   // New logic for variants
   const nameParts = product.name.split(" - ");
@@ -22,14 +24,17 @@ const NameCell = ({ product }: { product: Product }) => {
 
   return (
     <>
-      <ProductFormDialog
-        product={product}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-      />
+      {canEdit && (
+        <ProductFormDialog
+          product={product}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+        />
+      )}
       <button
-        onClick={() => setIsEditDialogOpen(true)}
-        className="font-medium text-left hover:underline"
+        onClick={() => canEdit && setIsEditDialogOpen(true)}
+        disabled={!canEdit}
+        className="font-medium text-left hover:underline disabled:no-underline disabled:cursor-text"
       >
         {baseName}
         {variantDescription && (
@@ -42,7 +47,7 @@ const NameCell = ({ product }: { product: Product }) => {
   )
 }
 
-export const columns: ColumnDef<Product>[] = [
+export const getColumns = (userRole?: AppUser['role']): ColumnDef<Product>[] => ([
   {
     id: "select",
     header: ({ table }) => (
@@ -79,7 +84,7 @@ export const columns: ColumnDef<Product>[] = [
       )
     },
     cell: ({ row }) => {
-      return <NameCell product={row.original} />
+      return <NameCell product={row.original} userRole={userRole} />
     },
   },
   {
@@ -165,4 +170,4 @@ export const columns: ColumnDef<Product>[] = [
     enableSorting: false,
     enableHiding: false,
   },
-]
+])
