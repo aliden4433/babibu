@@ -83,7 +83,7 @@ export function GeneralSettings({ settings }: GeneralSettingsProps) {
   }, [settings.defaultDiscount, discountForm])
 
   async function onDiscountSubmit(values: z.infer<typeof discountFormSchema>) {
-    const result = await updateGlobalSettings({ discount: values.discount });
+    const result = await updateGlobalSettings({ defaultDiscount: values.discount });
     if (result.success) {
       toast({
         title: "Pengaturan Disimpan",
