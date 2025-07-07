@@ -19,6 +19,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Form } from '@/components/ui/form';
+import { ExportStockOpnameButton } from './export-button';
 
 const stockOpnameProductSchema = z.object({
   id: z.string(),
@@ -50,6 +51,8 @@ export function StockOpnameClientPage({ initialProducts }: { initialProducts: Pr
     control: form.control,
     name: "products",
   });
+  
+  const watchedProducts = form.watch('products');
 
   useEffect(() => {
     const productsWithActualStock = initialProducts.map((p) => ({
@@ -94,6 +97,7 @@ export function StockOpnameClientPage({ initialProducts }: { initialProducts: Pr
           });
         }
       });
+      form.reset(form.getValues(), { keepValues: true, keepDirty: false });
     } else {
       toast({ variant: "destructive", title: "Error", description: result.message });
     }
@@ -135,8 +139,9 @@ export function StockOpnameClientPage({ initialProducts }: { initialProducts: Pr
   const stockOpnameForm = (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
+        <div className="flex justify-end gap-2">
+          <ExportStockOpnameButton products={watchedProducts} />
+          <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Simpan Perubahan
           </Button>
@@ -199,6 +204,7 @@ export function StockOpnameClientPage({ initialProducts }: { initialProducts: Pr
                     <TableCell className="text-right">
                       <Input
                         type="number"
+                        placeholder={`${field.systemStock}`}
                         className="text-right mx-auto max-w-[100px]"
                         {...form.register(`products.${index}.actualStock`)}
                       />
