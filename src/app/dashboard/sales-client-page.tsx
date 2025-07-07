@@ -70,6 +70,9 @@ export function SalesClientPage({ products, sales, categories, defaultDiscount }
 
   useEffect(() => {
     setTransactionDate(new Date());
+  }, []);
+
+  useEffect(() => {
     setDiscount(defaultDiscount);
   }, [defaultDiscount]);
 
