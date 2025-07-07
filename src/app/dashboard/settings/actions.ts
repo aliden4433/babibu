@@ -19,13 +19,19 @@ import type { ExpenseCategoryDoc } from "@/lib/types";
 const CATEGORIES_COLLECTION = "expense_categories";
 
 export async function getExpenseCategories(): Promise<ExpenseCategoryDoc[]> {
-  const categoriesCol = collection(db, CATEGORIES_COLLECTION);
-  const q = query(categoriesCol, orderBy("name", "asc"));
-  const snapshot = await getDocs(q);
-  const list = snapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as ExpenseCategoryDoc)
-  );
-  return list;
+  try {
+    const categoriesCol = collection(db, CATEGORIES_COLLECTION);
+    const q = query(categoriesCol, orderBy("name", "asc"));
+    const snapshot = await getDocs(q);
+    const list = snapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as ExpenseCategoryDoc)
+    );
+    console.log(`[getExpenseCategories] Fetched ${list.length} categories successfully.`);
+    return list;
+  } catch (error) {
+    console.error("Error fetching expense categories from Firestore: ", error);
+    return [];
+  }
 }
 
 export async function addExpenseCategory(name: string) {

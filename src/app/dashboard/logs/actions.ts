@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -14,13 +15,19 @@ import type { ActivityLog, AppUser } from '@/lib/types';
 const LOGS_COLLECTION = 'activity_logs';
 
 export async function getLogs(): Promise<ActivityLog[]> {
-  const logsCol = collection(db, LOGS_COLLECTION);
-  const q = query(logsCol, orderBy('timestamp', 'desc'));
-  const logSnapshot = await getDocs(q);
-  const logList = logSnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as ActivityLog)
-  );
-  return logList;
+  try {
+    const logsCol = collection(db, LOGS_COLLECTION);
+    const q = query(logsCol, orderBy('timestamp', 'desc'));
+    const logSnapshot = await getDocs(q);
+    const logList = logSnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as ActivityLog)
+    );
+    console.log(`[getLogs] Fetched ${logList.length} logs successfully.`);
+    return logList;
+  } catch (error) {
+    console.error("Error fetching logs from Firestore: ", error);
+    return [];
+  }
 }
 
 export async function logActivity(

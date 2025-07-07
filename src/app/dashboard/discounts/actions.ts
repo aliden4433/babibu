@@ -10,11 +10,17 @@ const PRODUCTS_COLLECTION = 'products';
 
 // Get all scheduled discounts
 export async function getScheduledDiscounts(): Promise<ScheduledDiscount[]> {
-  const discountsCol = collection(db, DISCOUNTS_COLLECTION);
-  const q = query(discountsCol, orderBy("startDate", "desc"));
-  const snapshot = await getDocs(q);
-  const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduledDiscount));
-  return list;
+  try {
+    const discountsCol = collection(db, DISCOUNTS_COLLECTION);
+    const q = query(discountsCol, orderBy("startDate", "desc"));
+    const snapshot = await getDocs(q);
+    const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduledDiscount));
+    console.log(`[getScheduledDiscounts] Fetched ${list.length} discounts successfully.`);
+    return list;
+  } catch (error) {
+    console.error("Error fetching scheduled discounts from Firestore: ", error);
+    return [];
+  }
 }
 
 // Create a new scheduled discount

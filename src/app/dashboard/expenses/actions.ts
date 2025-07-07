@@ -17,13 +17,19 @@ import { db } from "@/lib/firebase";
 import type { Expense } from "@/lib/types";
 
 export async function getExpenses(): Promise<Expense[]> {
-  const expensesCol = collection(db, "expenses");
-  const q = query(expensesCol, orderBy("date", "desc"));
-  const expenseSnapshot = await getDocs(q);
-  const expenseList = expenseSnapshot.docs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as Expense)
-  );
-  return expenseList;
+  try {
+    const expensesCol = collection(db, "expenses");
+    const q = query(expensesCol, orderBy("date", "desc"));
+    const expenseSnapshot = await getDocs(q);
+    const expenseList = expenseSnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as Expense)
+    );
+    console.log(`[getExpenses] Fetched ${expenseList.length} expenses successfully.`);
+    return expenseList;
+  } catch (error) {
+    console.error("Error fetching expenses from Firestore: ", error);
+    return [];
+  }
 }
 
 export async function addExpense(expense: Omit<Expense, "id">) {
