@@ -113,6 +113,12 @@ export function SalesHistoryList({ sales: initialSales, expenses: initialExpense
     if (userRole !== 'admin') return;
     setSaleToEdit(sale);
   };
+  
+  const handleSaleUpdate = (updatedSale: Sale) => {
+    setSales(currentSales =>
+      currentSales.map(s => (s.id === updatedSale.id ? updatedSale : s))
+    );
+  };
 
   const handleConfirmDelete = async () => {
     if (salesForDeletion.length === 0) return;
@@ -388,6 +394,7 @@ export function SalesHistoryList({ sales: initialSales, expenses: initialExpense
         onOpenChange={(open) => !open && setSaleToEdit(null)}
         sale={saleToEdit}
         products={products}
+        onSuccess={handleSaleUpdate}
       />
     </>
   );

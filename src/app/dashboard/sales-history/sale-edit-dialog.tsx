@@ -18,16 +18,17 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { updateSale } from "./actions"
+import { updateSale, type SaleUpdatePayload } from "./actions"
 
 interface SaleEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sale: Sale | null;
   products: Product[];
+  onSuccess: (updatedSale: Sale) => void;
 }
 
-export function SaleEditDialog({ open, onOpenChange, sale, products }: SaleEditDialogProps) {
+export function SaleEditDialog({ open, onOpenChange, sale, products, onSuccess }: SaleEditDialogProps) {
   const [items, setItems] = useState<SaleItem[]>([]);
   const [transactionDate, setTransactionDate] = useState<Date | undefined>();
   const [discountAmount, setDiscountAmount] = useState<number>(0);
@@ -112,7 +113,7 @@ export function SaleEditDialog({ open, onOpenChange, sale, products }: SaleEditD
     setIsLoading(true);
     
     try {
-      const payload = {
+      const payload: SaleUpdatePayload = {
         id: sale.id,
         items,
         date: transactionDate.toISOString(),
@@ -127,6 +128,8 @@ export function SaleEditDialog({ open, onOpenChange, sale, products }: SaleEditD
       const result = await updateSale(payload);
       if (result.success) {
         toast({ title: "Sukses", description: result.message });
+        const updatedSaleData: Sale = { ...sale, ...payload };
+        onSuccess(updatedSaleData);
         onOpenChange(false);
       } else {
         throw new Error(result.message);
