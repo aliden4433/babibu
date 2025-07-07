@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart2, History, LogOut, Package, ShoppingCart, UserCircle, PanelLeft, Settings, Wallet, PanelLeftClose, PanelLeftOpen, Tag } from "lucide-react"
+import { BarChart2, History, LogOut, Package, ShoppingCart, UserCircle, PanelLeft, Settings, Wallet, PanelLeftClose, PanelLeftOpen, Tag, ClipboardCheck } from "lucide-react"
 
 import {
   Sidebar,
@@ -22,12 +22,12 @@ import {
 import { Icons } from "@/components/icons"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
-import { CartProvider, useCart } from "@/context/cart-context"
+import { useCart } from "@/context/cart-context"
 
 const allNavItems = [
   { href: "/dashboard", icon: ShoppingCart, label: "Penjualan" },
   { href: "/dashboard/products", icon: Package, label: "Produk" },
-  { href: "/dashboard/stock-opname", icon: History, label: "Stok Opname", roles: ["admin"]},
+  { href: "/dashboard/stock-opname", icon: ClipboardCheck, label: "Stok Opname", roles: ["admin"]},
   { href: "/dashboard/discounts", icon: Tag, label: "Diskon Produk", roles: ["admin"] },
   { href: "/dashboard/sales-history", icon: History, label: "Riwayat Penjualan" },
   { href: "/dashboard/expenses", icon: Wallet, label: "Pengeluaran", roles: ["admin", "cashier"] },
@@ -131,10 +131,8 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <CartProvider>
       <SidebarProvider>
         <DashboardLayoutContent>{children}</DashboardLayoutContent>
       </SidebarProvider>
-    </CartProvider>
   )
 }
