@@ -186,10 +186,8 @@ const ExpenseMobileCard = ({ row, userRole, categories = [] }: { row: any, userR
 }
 
 const MobileCard = ({ row, userRole, categories, entityName }: { row: any, userRole?: AppUser['role'], categories?: ExpenseCategoryDoc[], entityName?: string }) => {
-    const data = row.original;
-    const isExpense = 'amount' in data && 'category' in data;
+    const isExpense = entityName === 'pengeluaran';
 
-    // For discount page, we still use ProductMobileCard but might adjust its behavior if needed
     if (isExpense) {
         return <ExpenseMobileCard row={row} userRole={userRole} categories={categories} />;
     }
