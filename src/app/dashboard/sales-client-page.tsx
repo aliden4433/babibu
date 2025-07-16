@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { Trash2, ShoppingCart, Loader2, Calendar as CalendarIcon, ChevronDown, PlusCircle } from "lucide-react"
-import { format } from "date-fns"
+import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion"
 
 import { addSale } from "./sales/actions"
@@ -221,33 +221,15 @@ export function SalesClientPage({ products, sales, categories, defaultDiscount }
         ) : (
           <div className="space-y-4">
             <AnimatePresence>
-            {cart.map((item) => {
-              const isDiscounted = item.product.originalPrice && item.product.originalPrice > item.price;
-              return (
-                <motion.div
-                  key={item.product.id}
-                  layout
-                  exit={{ opacity: 0, x: -100, transition: { duration: 0.2 } }}
-                  drag="x"
-                  dragElastic={0.2}
-                  onDragEnd={(event, info) => {
-                    const swipeThreshold = 60;
-                    if (Math.abs(info.offset.x) > swipeThreshold) {
-                      removeFromCart(item.product.id!);
-                      toast({
-                        title: "Item Dihapus",
-                        description: `${item.product.name} telah dihapus dari keranjang.`,
-                      });
-                    }
-                  }}
-                  className="cursor-grab active:cursor-grabbing"
-                >
-                  <div className="space-y-2 border-b border-border pb-3 last:border-b-0">
+              {cart.map((item) => {
+                const isDiscounted = item.product.originalPrice && item.product.originalPrice > item.price;
+                return (
+                  <div key={item.product.id} className="space-y-2 border-b border-border pb-3 last:border-b-0">
                     <div className="flex items-start justify-between gap-2">
-                       <div>
-                          <p className="text-sm font-medium break-words flex-grow pr-2">{item.product.name}</p>
-                          {isDiscounted && <Badge variant="destructive" className="mt-1 text-xs">SALE</Badge>}
-                        </div>
+                      <div>
+                        <p className="text-sm font-medium break-words flex-grow pr-2">{item.product.name}</p>
+                        {isDiscounted && <Badge variant="destructive" className="mt-1 text-xs">SALE</Badge>}
+                      </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 -mt-1 -mr-2" onClick={() => removeFromCart(item.product.id!)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -276,10 +258,8 @@ export function SalesClientPage({ products, sales, categories, defaultDiscount }
                         />
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-            )})}
-            </AnimatePresence>
+                  </div>)})}
+              </AnimatePresence>
           </div>
         )}
       </div>
